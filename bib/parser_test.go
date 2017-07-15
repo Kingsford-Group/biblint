@@ -1,0 +1,76 @@
+package bib
+
+import (
+	"fmt"
+	"os"
+	"strings"
+	"testing"
+)
+
+func TestParser(t *testing.T) {
+	const in = `@Article{moo,
+        title = {Chess playing {Masters}},
+        data-added = "now",
+        author = "Carl Kingsford and Henry Kingsford",
+    }
+    @PhDThesis{moo2,
+        school = "NYU",
+        journal = nbt,
+        year = 1794
+        author = "Art van der Lay",
+    }
+    @article{Trieu,
+  author = {Trieu, Tuan and Cheng, Jianlin},
+  date-added = {2015-01-26 18:09:19 +0000},
+  date-modified = {2015-01-26 18:09:19 +0000},
+  journal = {Nucleic Acids Research},
+  number = {7},
+  pages = {e52--e52},
+  publisher = {Oxford Univ Press},
+  title = {{Large-scale reconstruction of 3D structures of human chromosomes from chromosomal contact data}},
+  volume = {42},
+  year = {2014},
+}
+    these are ignored
+    `
+	p := NewParser(strings.NewReader(in))
+	db := p.ParseBibTeX()
+	if p.NErrors() > 0 {
+		p.PrintErrors(os.Stderr)
+	}
+
+	db.WriteDatabase(os.Stdout)
+	p.PrintErrors(os.Stdout)
+}
+
+func TestSplitOnTopLevel(t *testing.T) {
+	const in = "now and whyand and noandway {and} {there and what} an{d} test and"
+	for i, w := range splitOnTopLevelString(in, "and", true) {
+		fmt.Printf("%d [%s]\n", i, w)
+	}
+}
+
+func TestSplit(t *testing.T) {
+	const in = "hi {there word} this is"
+	for i, v := range splitOnTopLevel(in) {
+		fmt.Println(i, v)
+	}
+}
+
+func TestVon(t *testing.T) {
+	in := []string{"von", "Moo", "{de}", "Moo", "Berry"}
+	v, l := parseVon(in)
+	fmt.Printf("von = {%s} last = {%s}\n", v, l)
+}
+
+func TestParseName(t *testing.T) {
+	const in = "Henry von de Moo"
+	f, v, l := parseNameParts(in)
+	fmt.Printf("f={%s} v={%s} l={%s}\n", f, v, l)
+}
+
+func TestNormalizeName(t *testing.T) {
+	const in = "von de Moo, Jr., Henry"
+	a := NormalizeName(in)
+	fmt.Printf("f={%s} v={%s} l={%s} j={%s}\n", a.First, a.Von, a.Last, a.Jr)
+}

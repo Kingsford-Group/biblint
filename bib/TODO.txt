@@ -1,0 +1,62 @@
+
+/*
+TODO:
+    - entry checker for required fields
+    - remove empty fields
+    - author name checker
+    - write additional unit tests and have them acutally check the output
+    - handle #
+    - handle {"}'s in strings
+
+BUGS:
+
+DONE:
+    - recognize quoted ints
+    - parse author names
+    - handle @preamble
+    - handle integer IDENT
+    - write out the encountered errors
+    - include locations in errors
+
+FMT
+* sort by key
+* pretty print with consistnt formating
+* remove "comments"
+* put all @string{} at the top
+* remove all non-blessed fields
+
+LINT
+* check for unecessary {} around entire string
+* Check for undefined symbols
+* Check for missing commas
+* Check for duplicate keys
+* Check for duplicate symbol definitions
+* Check for malformed author names
+* Check for missing required fields
+* look for duplicate entries that have different keys?
+
+DUPS
+* look for duplicate entries that have different keys?
+
+REMOVETAG
+* remove all tags of the given type
+
+
+LIST
+    biblint list author
+* list all the values for the given field, along with the pubs that have
+  that value
+  sort the values by "similar" values
+* for authors "have that value" means "has that author"
+
+* list all the authors and the pubs with them
+
+SORT
+* by key, year, first author, last author, journal (any tag)
+    biblint sort -by [key|...]
+
+GENKEYS
+* generate keys from records using various patterns
+biblint genkeys "{author1}:{year}"
+
+

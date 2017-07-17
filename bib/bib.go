@@ -99,7 +99,7 @@ var optional = map[EntryKind][]string{
 // blessed lists fields that are neither required nor "optional" but that are
 // commonly used in bibtex entries. We treat "key" and "note" as blessed
 // instead of "optional", since those fields are "optional" for any entry type
-var blessed = []string{"key", "note", "url", "doi", "pmc", "pmid", "keywords", "issn", "file", "isbn"}
+var blessed = []string{"key", "note", "url", "doi", "pmc", "pmid", "keywords", "issn",  "isbn"}
 
 // predefinedSymbols lists the predefined symbols
 var predefinedSymbols = map[string]string{

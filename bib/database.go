@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+    "unicode"
 )
 
 // FieldType represents the type of a data entry
@@ -20,6 +21,32 @@ type Value struct {
 	T FieldType
 	S string
 	I int
+}
+
+
+// returns true if v1 < v2
+func (v1 *Value) Less(v2 *Value) bool {
+    if (v1.T == StringType || v1.T == SymbolType) && (v2.T == StringType || v2.T == SymbolType) {
+        return v1.S < v2.S
+    }
+
+    if v1.T == NumberType && v2.T == NumberType {
+        return v1.I < v2.I
+    }
+
+    vs1 := v1.S
+    if v1.T == NumberType {
+        vs1 = strconv.Itoa(v1.I)    
+    }
+
+    vs2 := v2.S
+    if v2.T == NumberType {
+        vs2 = strconv.Itoa(v2.I)
+
+    }
+
+    return vs1 < vs2
+
 }
 
 // Author represents an Author and the various named parts
@@ -74,6 +101,57 @@ func NewDatabase() *Database {
 		Preamble: make([]string, 0),
 	}
 }
+
+/*===============================================================================
+ * Sorting
+ *==============================================================================*/
+
+type pubSorter struct {
+    pubs []*Entry
+    by func(*Entry, *Entry)bool
+}
+
+func (ps *pubSorter) Len() int {
+    return len(ps.pubs)
+}
+
+func (ps *pubSorter) Less(i, j int) bool {
+    return ps.by(ps.pubs[i], ps.pubs[j])
+}
+
+func (ps *pubSorter) Swap(i, j int) {
+    ps.pubs[i], ps.pubs[j] = ps.pubs[j], ps.pubs[i]
+}
+
+
+func (db *Database) SortByField(field string, reverse bool) {
+    ps := &pubSorter{
+        pubs: db.Pubs,
+        by: func (e1, e2 *Entry) bool {
+            v1, ok1 := e1.Fields[field]
+            v2, ok2 := e2.Fields[field]
+            ans := false
+            switch {
+            case !ok1 && ok2:
+                ans = true
+            case ok1 && !ok2:
+                ans = false
+            case !ok1 && !ok2:
+                ans = (e1.Key < e2.Key)
+            case ok1 && ok1:
+                ans = v1.Less(v2)
+            }
+
+            if reverse {
+                ans = !ans
+            }
+            return ans
+        },
+    }
+    sort.Sort(ps)
+}
+
+
 
 // NormalizeAuthors parses every listed author and puts them into normal form.
 // It also populates the Authors field of each entry with the list of *Authors.
@@ -217,3 +295,43 @@ func (db *Database) RemoveEmptyFields() {
 		}
 	}
 }
+
+// IsStrangeCase returns true iff s has a capital letter someplace
+// other than the first position
+func IsStrangeCase(s string) bool {
+    for p, r := range s {
+        if p > 0 {
+            if unicode.IsUpper(r) {
+                return true
+            }
+        }
+    }
+    return false
+}
+
+func HasEscape(w string) bool {
+    for _, r := range w {
+        switch r {
+        case '"': return true
+        }
+    }
+    return false
+}
+
+
+// RemoveWholeFieldBraces removes the braces from fields that look like:
+// {{foo bar baz}}
+func (db *Database) RemoveWholeFieldBraces() {
+    db.TransformEachField(
+        func(tag string, v *Value) *Value {
+            // we only transform non-author, string-type fields
+            bn, size := ParseBraceTree(v.S)
+            if tag != "author" && v.T == StringType && bn.IsEntireStringBraced() {
+                if size == len(v.S) {
+                    v.S = bn.FlattenToMinBraces()
+                }
+            }
+            return v
+        })
+}
+

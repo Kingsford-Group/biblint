@@ -69,11 +69,14 @@ func doFmt(c *subcommand) bool {
 
 	// clean it up
 	db.NormalizeWhitespace()
+    db.RemoveWholeFieldBraces()
 	db.ConvertIntStringsToInt()
 	db.ReplaceSymbols()
 	db.RemoveNonBlessedFields([]string{})
 	db.RemoveEmptyFields()
 	db.NormalizeAuthors()
+
+    db.SortByField("year", true)
 
 	// write it out
 	db.WriteDatabase(os.Stdout)

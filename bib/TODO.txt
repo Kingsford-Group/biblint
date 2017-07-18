@@ -1,4 +1,17 @@
 
+
+LINT
+
+- Check for "years" that are not INTs
+- Check for volumes, numbers that are not INTs
+- Find titles that are entirely enclosed in {}
+- Find all caps words that are not inside {} and strange caps words
+    (i.e. any word that isn't Xxxx or xxxx)
+- Find authors that are misformatted
+- Find " that are not in {}
+- Check for required fields that are missing
+- 
+
 /*
 TODO:
     - entry checker for required fields
@@ -19,6 +32,8 @@ DONE:
     - include locations in errors
 
 FMT
+- convert {{INT}} -> INT
+- remove total {} field unless needed
 * sort by key
 * pretty print with consistnt formating
 * remove "comments"

@@ -74,3 +74,54 @@ func TestNormalizeName(t *testing.T) {
 	a := NormalizeName(in)
 	fmt.Printf("f={%s} v={%s} l={%s} j={%s}\n", a.First, a.Von, a.Last, a.Jr)
 }
+
+func TestBraces(t *testing.T) {
+    const in = "{hi {there this {is a nested} set}{or sets} of {strings}}"
+    //const in = "Hi there is this a normal string"
+    b, l := ParseBraceTree(in)
+    fmt.Printf("lens = %d read = %d\n", len(in), l)
+    PrintBraceTree(b, 0)
+    fmt.Printf("STRING = \"%s\"\n", b.Flatten())
+}
+
+// IsEntireStringBraces returns true iff the string looks like: ^{.......}$
+// where those those two braces are matched.  It will return FALSE, for
+// example, with this string {foo}~{bar}~{baz} or {foo}{bar}{baz}
+
+func IsEntireStringBracedAlternative(s string) bool {
+    nbraces := 0
+    for _, r := range s {
+        switch r {
+        case '{': 
+            nbraces++
+        case '}': 
+            nbraces--
+        default:
+            if nbraces == 0 {
+                return false
+            }
+        }
+    }
+    return true
+}
+
+func TestSplitWords(t *testing.T) {
+    const in = "hi there   moo man   \t  what"
+    s := splitWords(in)
+    for i, w := range s {
+        fmt.Printf("%d: \"%s\"\n", i, w)
+    }
+}
+
+func TestFlattenToMinBraces(t *testing.T) {
+    const in = "{hi there {mRNA} methods n\\\"eed {To be} Preserved nOW}"
+    bn, _ := ParseBraceTree(in)
+    PrintBraceTree(bn, 0)
+    fmt.Println(bn.FlattenToMinBraces())
+}
+
+func TestIsStrangeCase(t *testing.T) {
+    const in = "nOW"
+    fmt.Println(IsStrangeCase(in))
+}
+

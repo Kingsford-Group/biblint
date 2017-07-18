@@ -107,7 +107,7 @@ func IsEntireStringBracedAlternative(s string) bool {
 
 func TestSplitWords(t *testing.T) {
 	const in = "hi there   moo man   \t  what"
-	s := splitWords(in)
+	s := SplitWords(in)
 	for i, w := range s {
 		fmt.Printf("%d: \"%s\"\n", i, w)
 	}
@@ -115,8 +115,8 @@ func TestSplitWords(t *testing.T) {
 
 func TestFlattenToMinBraces(t *testing.T) {
 	//const in = "{hi there {mRNA} methods n\\\"eed {To be} Preserved nOW}"
-    const in = "RiboGalaxy: A browser based platform for the alignment, analysis and visualization of ribosome profiling data"
-    //const in = "Now is the moo time"
+	const in = "RiboGalaxy: A browser based platform for the alignment, analysis and visualization of ribosome profiling data"
+	//const in = "Now is the moo time"
 	bn, _ := ParseBraceTree(in)
 	PrintBraceTree(bn, 0)
 	fmt.Println(bn.FlattenToMinBraces())

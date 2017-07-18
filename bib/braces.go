@@ -7,11 +7,24 @@ import (
 	"unicode/utf8"
 )
 
+// BraceNode represents a single node in a parse tree of a brace string If
+// len(Children) == 0, then Leaf holds the leaf text for this node Each node in
+// the tree is either a root, a internal node, or a leaf (duh), with the
+// following meanings:
+//
+//      - only leaf nodes contain text
+//      - internal nodes represent {}-deliminated strings
+//      - root nodes represent the entire string and DO NOT correspond to {}-diminated strings.
+//
+// For example, "{foo moo man}" leads to the tree with a ROOT node, which has a
+// single INTERNAL node child, which itself has a single LEAF node.
+
 type BraceNode struct {
 	Children []*BraceNode
 	Leaf     string
 }
 
+// ParseBraceTree converts a string into a tree of BraceNodes
 func ParseBraceTree(s string) (*BraceNode, int) {
 
 	// walk thru runes, if
@@ -47,6 +60,7 @@ func ParseBraceTree(s string) (*BraceNode, int) {
 	return me, i
 }
 
+// printIndent prints a given number of spaces (for debugging)
 func printIndent(indent int) {
 	for indent > 0 {
 		fmt.Print(" ")
@@ -54,18 +68,26 @@ func printIndent(indent int) {
 	}
 }
 
+// IsLeaf() returns true if this BraceNode represents a leaf
 func (bn *BraceNode) IsLeaf() bool {
 	return len(bn.Children) == 0
 }
 
+// IsEntireStringBraced() returns true iff the entire string is enclosed in a
+// {} {Moo}{Bar} returns false, but {Moo Bar} returns true. Technically, this
+// is checked by testing whether the root node has a single child that is
+// itself a braceNode (and not a leaf)
 func (bn *BraceNode) IsEntireStringBraced() bool {
 	return len(bn.Children) == 1 && !bn.Children[0].IsLeaf()
 }
 
+// Flatten() return the string represented by the tree as a string
 func (bn *BraceNode) Flatten() string {
 	return bn.flatten(true)
 }
 
+// flatten is a helper function that does the work of Flatten() [it exists
+// to handle root nodes specially]
 func (bn *BraceNode) flatten(isroot bool) string {
 	if bn.IsLeaf() {
 		return bn.Leaf
@@ -82,6 +104,8 @@ func (bn *BraceNode) flatten(isroot bool) string {
 	}
 }
 
+//PrintBraceTree is used for debugging --- it prints the brace tree to stdout
+//in a simple format.
 func PrintBraceTree(b *BraceNode, indent int) {
 	printIndent(indent)
 	if b.Leaf != "" {
@@ -94,7 +118,10 @@ func PrintBraceTree(b *BraceNode, indent int) {
 	}
 }
 
-func splitWords(s string) []string {
+// SplitWords returns an array of strings, where each entry is either a
+// sequence of non-whitespace chars, or a sequence of whitepace chars. s ==
+// strings.Join(return, "")
+func SplitWords(s string) []string {
 	words := make([]string, 0)
 	word := ""
 	c, _ := utf8.DecodeRuneInString(s)
@@ -118,27 +145,33 @@ func splitWords(s string) []string {
 	return words
 }
 
+// ContainsNoBraces returns true if the tree contains no {}-deliminated substrings
 func (bn *BraceNode) ContainsNoBraces() bool {
-    return len(bn.Children) == 1 && bn.Children[0].IsLeaf()
+	return len(bn.Children) == 1 && bn.Children[0].IsLeaf()
 }
 
+// FlattenToMinBraces tries to smartly {}-deliminate the smallest regions in
+// the text that correspond to things that need {}-delimination: strange-case
+// (mRNA) and quotes (").  This will *only* change strings if it looks like the
+// user didn't put any thought into it: specifically, only if the entire string
+// is {] or none of the string is {}.
 func (bn *BraceNode) FlattenToMinBraces() string {
 	// only modify if it looks like the user didn't really think about
 	// the braces (the most common case)
-    var children []*BraceNode = nil
+	var children []*BraceNode = nil
 	if bn.IsEntireStringBraced() {
-        children = bn.Children[0].Children
-    } else if bn.ContainsNoBraces() {
-        children = bn.Children
-    }
+		children = bn.Children[0].Children
+	} else if bn.ContainsNoBraces() {
+		children = bn.Children
+	}
 
-    if children != nil {
+	if children != nil {
 		words := make([]string, 0)
 
 		for _, c := range children {
 			// for leaf children, we iterate through the words
 			if c.IsLeaf() {
-				for _, w := range splitWords(c.Leaf) {
+				for _, w := range SplitWords(c.Leaf) {
 					if IsStrangeCase(w) || HasEscape(w) {
 						words = append(words, "{"+w+"}")
 					} else {
@@ -148,8 +181,8 @@ func (bn *BraceNode) FlattenToMinBraces() string {
 				// for non-leaf children, we just flatten as normal
 			} else {
 				words = append(words, c.flatten(false))
-            }
-			
+			}
+
 		}
 		return strings.Join(words, "")
 
@@ -231,4 +264,28 @@ func splitOnTopLevel(s string) []string {
 		words = append(words, word)
 	}
 	return words
+}
+
+// IsStrangeCase returns true iff s has a capital letter someplace
+// other than the first position
+func IsStrangeCase(s string) bool {
+	for p, r := range s {
+		if p > 0 {
+			if unicode.IsUpper(r) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// HasEscape returns true iff the string has a " someplace in it.
+func HasEscape(w string) bool {
+	for _, r := range w {
+		switch r {
+		case '"':
+			return true
+		}
+	}
+	return false
 }

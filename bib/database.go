@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+    "regexp"
 )
 
 // FieldType represents the type of a data entry
@@ -202,6 +203,7 @@ func (db *Database) ConvertIntStringsToInt() {
 
 // NoramalizeWhitespace replaces errant whitespace with " " characters
 func (db *Database) NormalizeWhitespace() {
+    spaces := regexp.MustCompile(" +")
 	db.TransformEachField(
 		func(tag string, value *Value) *Value {
 			if value.T == StringType {
@@ -209,6 +211,7 @@ func (db *Database) NormalizeWhitespace() {
 				value.S = strings.Replace(value.S, "\t", " ", -1)
 				value.S = strings.Replace(value.S, "\x0D", " ", -1)
 				value.S = strings.TrimSpace(value.S)
+                value.S = spaces.ReplaceAllString(value.S, " ")
 			}
 			return value
 		})

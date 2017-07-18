@@ -118,12 +118,24 @@ func splitWords(s string) []string {
 	return words
 }
 
+func (bn *BraceNode) ContainsNoBraces() bool {
+    return len(bn.Children) == 1 && bn.Children[0].IsLeaf()
+}
+
 func (bn *BraceNode) FlattenToMinBraces() string {
 	// only modify if it looks like the user didn't really think about
 	// the braces (the most common case)
+    var children []*BraceNode = nil
 	if bn.IsEntireStringBraced() {
+        children = bn.Children[0].Children
+    } else if bn.ContainsNoBraces() {
+        children = bn.Children
+    }
+
+    if children != nil {
 		words := make([]string, 0)
-		for _, c := range bn.Children[0].Children {
+
+		for _, c := range children {
 			// for leaf children, we iterate through the words
 			if c.IsLeaf() {
 				for _, w := range splitWords(c.Leaf) {
@@ -136,7 +148,8 @@ func (bn *BraceNode) FlattenToMinBraces() string {
 				// for non-leaf children, we just flatten as normal
 			} else {
 				words = append(words, c.flatten(false))
-			}
+            }
+			
 		}
 		return strings.Join(words, "")
 

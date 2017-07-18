@@ -322,7 +322,7 @@ func (db *Database) RemoveWholeFieldBraces() {
 		func(tag string, v *Value) *Value {
 			// we only transform non-author, string-type fields
 			bn, size := ParseBraceTree(v.S)
-			if tag != "author" && v.T == StringType && bn.IsEntireStringBraced() {
+			if tag == "title" && v.T == StringType {
 				if size == len(v.S) {
 					v.S = bn.FlattenToMinBraces()
 				}

@@ -114,7 +114,9 @@ func TestSplitWords(t *testing.T) {
 }
 
 func TestFlattenToMinBraces(t *testing.T) {
-	const in = "{hi there {mRNA} methods n\\\"eed {To be} Preserved nOW}"
+	//const in = "{hi there {mRNA} methods n\\\"eed {To be} Preserved nOW}"
+    const in = "RiboGalaxy: A browser based platform for the alignment, analysis and visualization of ribosome profiling data"
+    //const in = "Now is the moo time"
 	bn, _ := ParseBraceTree(in)
 	PrintBraceTree(bn, 0)
 	fmt.Println(bn.FlattenToMinBraces())

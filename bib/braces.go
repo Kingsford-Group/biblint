@@ -172,7 +172,7 @@ func (bn *BraceNode) FlattenToMinBraces() string {
 			// for leaf children, we iterate through the words
 			if c.IsLeaf() {
 				for _, w := range SplitWords(c.Leaf) {
-					if IsStrangeCase(w) || HasEscape(w) {
+					if IsStrangeCase(w) || HasQuote(w) {
 						words = append(words, "{"+w+"}")
 					} else {
 						words = append(words, w)
@@ -269,18 +269,22 @@ func splitOnTopLevel(s string) []string {
 // IsStrangeCase returns true iff s has a capital letter someplace
 // other than the first position
 func IsStrangeCase(s string) bool {
-	for p, r := range s {
+	p := 0
+	for _, r := range s {
 		if p > 0 {
 			if unicode.IsUpper(r) {
 				return true
 			}
 		}
+		if !unicode.IsPunct(r) {
+			p++
+		}
 	}
 	return false
 }
 
-// HasEscape returns true iff the string has a " someplace in it.
-func HasEscape(w string) bool {
+// HasQuote returns true iff the string has a " someplace in it.
+func HasQuote(w string) bool {
 	for _, r := range w {
 		switch r {
 		case '"':

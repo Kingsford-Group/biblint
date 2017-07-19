@@ -220,16 +220,23 @@ func (db *Database) NormalizeWhitespace() {
 // replaces the use of those strings with the symbol. It requires (a) that the
 // strings match exactly and (b) there is only 1 symbol that matches the string.
 func (db *Database) ReplaceSymbols() {
-	inverted := make(map[string]string)
-	for sym, val := range db.Symbols {
-		if val.T != StringType {
-			continue
+	symbols := make(map[string]string)
+	for k, v := range predefinedSymbols {
+		symbols[k] = v
+	}
+	for k, v := range db.Symbols {
+		if v.T == StringType {
+			symbols[k] = v.S
 		}
+	}
+
+	inverted := make(map[string]string)
+	for sym, val := range symbols {
 		// if we define it twice, we can't invert
-		if _, ok := inverted[val.S]; ok {
-			inverted[val.S] = ""
+		if _, ok := inverted[val]; ok {
+			inverted[val] = ""
 		} else {
-			inverted[val.S] = sym
+			inverted[val] = sym
 		}
 	}
 	db.TransformEachField(

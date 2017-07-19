@@ -622,6 +622,28 @@ func NormalizeName(name string) *Author {
 	return a
 }
 
+// surround a {} if it contains a top-level "
+func quoteName(s string) string {
+	hastopquote := false
+	nbrace := 0
+	for _, r := range s {
+		switch r {
+		case '{':
+			nbrace++
+		case '}':
+			nbrace--
+		case '"':
+			if nbrace == 0 {
+				hastopquote = true
+			}
+		}
+	}
+	if hastopquote {
+		return "{" + s + "}"
+	}
+	return s
+}
+
 // String() converts an author to a normalized name string.  We always use the
 // von Last, First or von Last, Jr, First formats depending onn whether Jr is
 // empty or not
@@ -629,17 +651,22 @@ func (a *Author) String() string {
 	if a.Others {
 		return "others"
 	}
-	if a.Jr == "" {
-		if a.Von == "" {
-			return fmt.Sprintf("%s, %s", a.Last, a.First)
-		} else {
-			return fmt.Sprintf("%s %s, %s", a.Von, a.Last, a.First)
-		}
+	last := a.Last
+	if a.Von != "" {
+		last = a.Von + " " + a.Last
+	}
+
+	last = quoteName(last)
+	first := quoteName(a.First)
+	jr := quoteName(a.Jr)
+
+	if last == "" {
+		return a.First
+	} else if a.First == "" {
+		return last
+	} else if a.Jr == "" {
+		return fmt.Sprintf("%s, %s", last, first)
 	} else {
-		if a.Von == "" {
-			return fmt.Sprintf("%s, %s, %s", a.Last, a.Jr, a.First)
-		} else {
-			return fmt.Sprintf("%s %s, %s, %s", a.Von, a.Last, a.Jr, a.First)
-		}
+		return fmt.Sprintf("%s, %s, %s", last, jr, first)
 	}
 }

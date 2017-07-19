@@ -2,21 +2,11 @@
 
 LINT
 
-- Check for "years" that are not INTs
-- Check for volumes, numbers that are not INTs
-- Find titles that are entirely enclosed in {}
-- Find all caps words that are not inside {} and strange caps words
-    (i.e. any word that isn't Xxxx or xxxx)
 - Find authors that are misformatted
 - Find " that are not in {}
-- Check for required fields that are missing
-- 
 
 /*
 TODO:
-    - entry checker for required fields
-    - remove empty fields
-    - author name checker
     - write additional unit tests and have them acutally check the output
     - handle #
     - handle {"}'s in strings
@@ -24,6 +14,10 @@ TODO:
 BUGS:
 
 DONE:
+    - Find titles that are entirely enclosed in {}
+    - Find all caps words that are not inside {} and strange caps words
+        (i.e. any word that isn't Xxxx or xxxx)
+    - remove empty fields
     - recognize quoted ints
     - parse author names
     - handle @preamble
@@ -32,23 +26,36 @@ DONE:
     - include locations in errors
 
 FMT
-- convert {{INT}} -> INT
-- remove total {} field unless needed
-* sort by key
-* pretty print with consistnt formating
-* remove "comments"
-* put all @string{} at the top
-* remove all non-blessed fields
+- add {} around " in fields
+- merge adjacent {} nodes?
+- Replace lone - in pages with --
+- remove . from the end of titles
+* back replace months
+* Sorts entries by year
+* Removes empty fields
+* Removes non-blessed fields
+* Removes {} around entire fields (trying to {} smaller sections}
+* Converts {INT} -> INT
+* Puts @preamble at the top
+* Puts @string at the top (after @preamble)
+* Remove all comments
+* Normalize whitespace within fields
+* Format all authors as von Last, First or von Last, Jr, First
+* Use symbols whenever unambiguious
+* Format the entries consistently, ordering fields consistently
+
 
 LINT
-* check for unecessary {} around entire string
-* Check for undefined symbols
-* Check for missing commas
-* Check for duplicate keys
-* Check for duplicate symbol definitions
-* Check for malformed author names
-* Check for missing required fields
-* look for duplicate entries that have different keys?
+- Check for "years" that are not INTs
+- Check for volumes, numbers that are not INTs
+- Check for undefined symbols
+- Check for missing commas
+- Check for duplicate keys
+- Check for duplicate symbol definitions
+- Check for malformed author names
+- Check for missing required fields
+- look for duplicate entries that have different keys?
+- 
 
 DUPS
 * look for duplicate entries that have different keys?

@@ -18,7 +18,8 @@ import (
 type EntryKind string
 
 const (
-	Other         EntryKind = "other"
+	Deleted       EntryKind = "**DELETED**"
+	Other                   = "other"
 	String                  = "string"
 	Preamble                = "preamble"
 	Article                 = "article"

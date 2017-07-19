@@ -45,7 +45,19 @@ func (v1 *Value) Less(v2 *Value) bool {
 	}
 
 	return vs1 < vs2
+}
 
+// Equals returns true if v1 == v2
+func (v1 *Value) Equals(v2 *Value) bool {
+	if v1.T == v2.T {
+		switch v1.T {
+		case StringType, SymbolType:
+			return v1.S == v2.S
+		case NumberType:
+			return v1.I == v2.I
+		}
+	}
+	return false
 }
 
 // Author represents an Author and the various named parts
@@ -57,6 +69,10 @@ type Author struct {
 	Jr     string
 }
 
+func (a *Author) Equals(b *Author) bool {
+	return *a == *b
+}
+
 // Entry represents some publication or entry in the database
 type Entry struct {
 	Kind        EntryKind
@@ -64,6 +80,32 @@ type Entry struct {
 	Key         string
 	Fields      map[string]*Value
 	AuthorList  []*Author
+}
+
+// IsSubset returns true if this entnry is a subset of the given one. An e1 is
+// a subset of e2 if they (a) have the same type, and (b) every field in e1
+// appears in e2 with the exact same value
+func (e1 *Entry) IsSubset(e2 *Entry) bool {
+	if e1.Kind != e2.Kind || strings.ToLower(e1.EntryString) != strings.ToLower(e2.EntryString) {
+		return false
+	}
+
+	for tag, value1 := range e1.Fields {
+		if value2, ok := e2.Fields[tag]; !ok || !value1.Equals(value2) {
+			return false
+		}
+	}
+	return true
+}
+
+// Equals returns true if the two entries are equal. Entries e1 and e2 are
+// equal if they are the same Kind, have the exact same set of tags, and have
+// exactly the same values for each tag. Note that the entrie's KEY does not
+// play a role in Equality testing, nor does the parsed author list -- two
+// entries would be unequal if they had the same author list encoded
+// differently.
+func (e1 *Entry) Equals(e2 *Entry) bool {
+	return e1.IsSubset(e2) && e2.IsSubset(e1)
 }
 
 // newEntry creates a new empty entry
@@ -260,6 +302,43 @@ func (db *Database) ReplaceSymbols() {
 		})
 }
 
+// Find month fields that contain abbreviated text or numbers
+// Note that we don't need to handle fields that list the full month name since
+// those are handled by the pre-defined symbols
+func (db *Database) ReplaceAbbrMonths() {
+	months := map[string]string{
+		"jan":  "jan",
+		"feb":  "feb",
+		"mar":  "mar",
+		"apr":  "apr",
+		"may":  "may",
+		"jun":  "jun",
+		"jul":  "jul",
+		"aug":  "aug",
+		"sep":  "sep",
+		"sept": "sep",
+		"oct":  "oct",
+		"nov":  "nov",
+		"dec":  "dec",
+	}
+	monthsnum := []string{"jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"}
+	db.TransformField("month",
+		func(tag string, value *Value) *Value {
+			if value.T == StringType {
+				if sym, ok := months[strings.ToLower(value.S)]; ok {
+					value.T = SymbolType
+					value.S = sym
+				}
+			} else if value.T == NumberType {
+				if 1 <= value.I && value.I <= 12 {
+					value.T = SymbolType
+					value.S = monthsnum[value.I-1]
+				}
+			}
+			return value
+		})
+}
+
 // RemoveNonBlessedFields removes any field that isn't 'blessed'. The blessed
 // fields are (a) any fields in the required or optional global variables, any
 // that are in the blessed global variable, plus any fields listed in the
@@ -339,8 +418,8 @@ func (db *Database) RemovePeriodFromTitles() {
 		})
 }
 
-func (db *Database) FixSingleHyphenInPages() {
-	dash := regexp.MustCompile(`([[:digit:]])-([[:digit:]])`)
+func (db *Database) FixHyphensInPages() {
+	dash := regexp.MustCompile(`([[:digit:]])\s*-{1,2}\s*([[:digit:]])`)
 	db.TransformField("pages",
 		func(tag string, v *Value) *Value {
 			if v.T == StringType {
@@ -351,5 +430,45 @@ func (db *Database) FixSingleHyphenInPages() {
 			}
 			return v
 		})
+}
 
+// RemoveExactDups find entries that are Equal and that have the same Key and deletes one of
+// them.
+func (db *Database) RemoveExactDups() {
+
+	// bin everything by key (lowercase)
+	bins := make(map[string][]*Entry)
+	for _, e := range db.Pubs {
+		key := strings.ToLower(e.Key)
+		if _, ok := bins[key]; !ok {
+			bins[key] = make([]*Entry, 0)
+		}
+		bins[key] = append(bins[key], e)
+	}
+
+	// for each bin
+	ndel := 0
+	for _, entries := range bins {
+		// for every pair of entries
+		for i := range entries {
+			for j := i + 1; j < len(entries); j++ {
+				// if i and j are dups
+				if entries[i].Equals(entries[j]) {
+					entries[i].Kind = Deleted
+					ndel++
+					break // move to next i
+				}
+			}
+		}
+	}
+
+	newPubs := make([]*Entry, len(db.Pubs)-ndel)
+	i := 0
+	for _, e := range db.Pubs {
+		if e.Kind != Deleted {
+			newPubs[i] = e
+			i++
+		}
+	}
+	db.Pubs = newPubs
 }

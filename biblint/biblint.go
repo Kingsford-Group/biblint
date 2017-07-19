@@ -72,11 +72,14 @@ func doClean(c *subcommand) bool {
 	db.RemoveWholeFieldBraces()
 	db.ConvertIntStringsToInt()
 	db.ReplaceSymbols()
+	db.ReplaceAbbrMonths()
 	db.RemoveNonBlessedFields([]string{})
 	db.RemoveEmptyFields()
 	db.NormalizeAuthors()
 	db.RemovePeriodFromTitles()
-	db.FixSingleHyphenInPages()
+	db.FixHyphensInPages()
+
+    db.RemoveExactDups()
 
 	db.SortByField("year", true)
 

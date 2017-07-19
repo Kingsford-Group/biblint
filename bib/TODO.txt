@@ -44,10 +44,9 @@ CLEAN
 * Format all authors as von Last, First or von Last, Jr, First
 * Use symbols whenever unambiguious
 * Format the entries consistently, ordering fields consistently
-
+* PAges that look like NUMBER - NUMBER -> NUMBER--NUMBER
 
 LINT
-- PAges that look like NUMBER - NUMBER
 - Pages A--B where A > B
 - Check for unmatched $
 - Check for "years" that are not INTs

@@ -1,10 +1,13 @@
 package bib
 
 import (
+	"fmt"
+	"io"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // FieldType represents the type of a data entry
@@ -21,6 +24,30 @@ type Value struct {
 	T FieldType
 	S string
 	I int
+}
+
+type BibTeXError struct {
+	BadEntry *Entry
+	Tag      string
+	Msg      string
+}
+
+func (db *Database) addError(e *Entry, tag string, msg string) {
+	db.Errors = append(db.Errors, &BibTeXError{
+		BadEntry: e,
+		Tag:      tag,
+		Msg:      msg,
+	})
+}
+
+func (db *Database) PrintErrors(w io.Writer) {
+	for _, er := range db.Errors {
+		if er.Tag != "" {
+			fmt.Fprintf(w, "warn: %s %s: %s\n", er.BadEntry.Key, er.Tag, er.Msg)
+		} else {
+			fmt.Fprintf(w, "warn: %s: %s\n", er.BadEntry.Key)
+		}
+	}
 }
 
 // returns true if v1 < v2
@@ -132,6 +159,7 @@ type Database struct {
 	Pubs     []*Entry
 	Symbols  map[string]*Value
 	Preamble []string
+	Errors   []*BibTeXError
 }
 
 // NewDatabase creates a new empty database
@@ -140,6 +168,7 @@ func NewDatabase() *Database {
 		Pubs:     make([]*Entry, 0),
 		Symbols:  make(map[string]*Value),
 		Preamble: make([]string, 0),
+		Errors:   make([]*BibTeXError, 0),
 	}
 }
 
@@ -164,6 +193,10 @@ func (ps *pubSorter) Swap(i, j int) {
 	ps.pubs[i], ps.pubs[j] = ps.pubs[j], ps.pubs[i]
 }
 
+// SortByField sorts the database by the given field. Missing fields will come
+// before non-missing fields. Within the missing fields, entries will be sorted
+// by Key. Uses the value.Less function to determine the order. If reverse is
+// true, this order will be reversed.
 func (db *Database) SortByField(field string, reverse bool) {
 	ps := &pubSorter{
 		pubs: db.Pubs,
@@ -395,9 +428,8 @@ func (db *Database) RemoveWholeFieldBraces() {
 	db.TransformEachField(
 		func(tag string, v *Value) *Value {
 			// we only transform non-author, string-type fields
-			bn, size := ParseBraceTree(v.S)
 			if v.T == StringType && tag != "author" {
-				if size == len(v.S) {
+				if bn, size := ParseBraceTree(v.S); size == len(v.S) {
 					v.S = bn.FlattenToMinBraces()
 				}
 			}
@@ -418,6 +450,8 @@ func (db *Database) RemovePeriodFromTitles() {
 		})
 }
 
+// FixHyphensInPages will replace pages fields that look like NUMBER - NUMBER or
+// NUMBER -- NUMBER with NUMBER--NUMBER
 func (db *Database) FixHyphensInPages() {
 	dash := regexp.MustCompile(`([[:digit:]])\s*-{1,2}\s*([[:digit:]])`)
 	db.TransformField("pages",
@@ -471,4 +505,92 @@ func (db *Database) RemoveExactDups() {
 		}
 	}
 	db.Pubs = newPubs
+}
+
+func (db *Database) CheckField(tag string, check func(*Value) string) {
+	for _, e := range db.Pubs {
+		if v, ok := e.Fields[tag]; ok {
+			if msg := check(v); msg != "" {
+				db.addError(e, tag, msg)
+			}
+		}
+	}
+}
+
+func (db *Database) CheckYearsAreInt() {
+	db.CheckField("year",
+		func(v *Value) string {
+			if v.T == StringType {
+				return fmt.Sprintf("year is not an integer \"%s\"", v.S)
+			} else {
+				return ""
+			}
+		})
+}
+
+func (db *Database) CheckEtAl() {
+	etal := regexp.MustCompile(`[eE][tT]\s+[aA][lL]`)
+	db.CheckField("author",
+		func(v *Value) string {
+			if v.T == StringType && etal.MatchString(v.S) {
+				return "author contains et al"
+			} else {
+				return ""
+			}
+		})
+}
+
+func (db *Database) CheckAllFields(check func(string, *Value) string) {
+	for _, e := range db.Pubs {
+		for tag, value := range e.Fields {
+			if msg := check(tag, value); msg != "" {
+				db.addError(e, tag, msg)
+			}
+		}
+	}
+}
+
+func (db *Database) CheckASCII() {
+	db.CheckAllFields(
+		func(tag string, v *Value) string {
+			if v.T == StringType {
+				for i, r := range v.S {
+					if r > unicode.MaxASCII {
+						return fmt.Sprintf("contains non-ascii character '%c' at position %d", r, i)
+					}
+				}
+			}
+			return ""
+		})
+}
+
+func (db *Database) CheckLoneHyphenInTitle() {
+	hyphen := regexp.MustCompile(`\s-\s`)
+	db.CheckField("title",
+		func(v *Value) string {
+			if v.T == StringType && hyphen.MatchString(v.S) {
+				return "title contains lone \" - \" when --- is probably needed"
+			}
+			return ""
+		})
+}
+
+func (db *Database) CheckPageRanges() {
+	pages := regexp.MustCompile(`^(\d+)--(\d+)$`)
+	db.CheckField("pages",
+		func(v *Value) string {
+			if v.T == StringType && pages.MatchString(v.S) {
+				ab := pages.FindStringSubmatch(v.S)
+				if len(ab) == 3 {
+					start, err1 := strconv.Atoi(ab[1])
+					end, err2 := strconv.Atoi(ab[2])
+					if err1 == nil && err2 == nil {
+						if start > end {
+							return fmt.Sprintf("page range is empty %d--%d", start, end)
+						}
+					}
+				}
+			}
+			return ""
+		})
 }

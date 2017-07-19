@@ -79,9 +79,16 @@ func doClean(c *subcommand) bool {
 	db.RemovePeriodFromTitles()
 	db.FixHyphensInPages()
 
-    db.RemoveExactDups()
+	db.RemoveExactDups()
 
 	db.SortByField("year", true)
+
+	db.CheckYearsAreInt()
+	db.CheckEtAl()
+	db.CheckASCII()
+	db.CheckLoneHyphenInTitle()
+	db.CheckPageRanges()
+	db.PrintErrors(os.Stderr)
 
 	// write it out
 	db.WriteDatabase(os.Stdout)

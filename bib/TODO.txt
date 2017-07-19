@@ -46,19 +46,33 @@ CLEAN
 * Format the entries consistently, ordering fields consistently
 * PAges that look like NUMBER - NUMBER -> NUMBER--NUMBER
 
+- lowercase words in Journal name?
+- Pages A--B where A > B -> replace B with the expansion based on A
+
 LINT
-- Pages A--B where A > B
+* Lone - instead of --- in title?
+* "et al" appearing in author lists
+* Non-ascii characters anyplace
+* Check for "years" that are not INTs
+* Pages A--B where A > B [add to clean?]
+
+- pages that only contain symbols ?
 - Check for unmatched $
-- Check for "years" that are not INTs
 - Check for volumes, numbers that are not INTs
+
 - Check for undefined symbols
-- Check for missing commas
-- Check for duplicate keys
 - Check for duplicate symbol definitions
+- Check for duplicate keys
+
+- Check for missing commas
 - Check for malformed author names
 - Check for missing required fields
 - look for duplicate entries that have different keys?
-- 
+- URLs inside of \url{} ?
+
+field@entry:line: error message
+
+
 
 DUPS
 * look for duplicate entries that have different keys?

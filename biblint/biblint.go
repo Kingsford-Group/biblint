@@ -88,6 +88,7 @@ func doClean(c *subcommand) bool {
 	db.CheckASCII()
 	db.CheckLoneHyphenInTitle()
 	db.CheckPageRanges()
+	db.CheckUndefinedSymbols()
 	db.PrintErrors(os.Stderr)
 
 	// write it out

@@ -564,6 +564,23 @@ func (db *Database) CheckASCII() {
 		})
 }
 
+func (db *Database) CheckUndefinedSymbols() {
+	db.CheckAllFields(
+		func(tag string, v *Value) string {
+			if v.T == SymbolType {
+				ls := strings.ToLower(v.S)
+				if _, ok := db.Symbols[ls]; ok {
+					return ""
+				}
+				if _, ok := predefinedSymbols[ls]; ok {
+					return ""
+				}
+				return fmt.Sprintf("symbol \"%s\" is undefined", v.S)
+			}
+			return ""
+		})
+}
+
 func (db *Database) CheckLoneHyphenInTitle() {
 	hyphen := regexp.MustCompile(`\s-\s`)
 	db.CheckField("title",

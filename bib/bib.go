@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -114,6 +115,7 @@ var predefinedSymbols = map[string]string{
 	"aug": "August",
 	"sep": "September",
 	"oct": "October",
+	"nov": "November",
 	"dec": "December",
 }
 
@@ -257,7 +259,11 @@ func (p *Parser) readTagValue(entry *Entry) bool {
 
 	if p.peekTokenIs(lexer.IDENT) {
 		p.advanceTokens()
-		v = &Value{T: SymbolType, S: p.curToken.Literal}
+		if i, err := strconv.Atoi(p.curToken.Literal); err == nil {
+			v = &Value{T: NumberType, I: i}
+		} else {
+			v = &Value{T: SymbolType, S: p.curToken.Literal}
+		}
 
 	} else if p.peekTokenIs(lexer.STRING) {
 		p.advanceTokens()

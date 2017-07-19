@@ -387,7 +387,11 @@ func (p *Parser) ParseBibTeX() *Database {
 						p.addError("Wrong number of string definitions in @string")
 					} else {
 						for k, v := range entry.Fields {
+							if _, ok := database.Symbols[k]; ok {
+								p.addError(fmt.Sprintf("Symbol \"%s\" is defined more than once", k))
+							}
 							database.Symbols[k] = v
+							break
 						}
 					}
 				case Preamble:

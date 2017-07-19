@@ -89,6 +89,7 @@ func doClean(c *subcommand) bool {
 	db.CheckLoneHyphenInTitle()
 	db.CheckPageRanges()
 	db.CheckUndefinedSymbols()
+	db.CheckDuplicateKeys()
 	db.PrintErrors(os.Stderr)
 
 	// write it out

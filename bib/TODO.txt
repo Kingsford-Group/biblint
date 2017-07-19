@@ -55,14 +55,15 @@ LINT
 * Non-ascii characters anyplace
 * Check for "years" that are not INTs
 * Pages A--B where A > B [add to clean?]
+* Check for undefined symbols
+* Check for duplicate symbol definitions
+* Check for duplicate keys
 
 - pages that only contain symbols ?
 - Check for unmatched $
 - Check for volumes, numbers that are not INTs
 
-- Check for undefined symbols
-- Check for duplicate symbol definitions
-- Check for duplicate keys
+- check for two symbols defining same thing?
 
 - Check for missing commas
 - Check for malformed author names

@@ -45,7 +45,7 @@ func (db *Database) PrintErrors(w io.Writer) {
 		if er.Tag != "" {
 			fmt.Fprintf(w, "warn: %s %s: %s\n", er.BadEntry.Key, er.Tag, er.Msg)
 		} else {
-			fmt.Fprintf(w, "warn: %s: %s\n", er.BadEntry.Key)
+			fmt.Fprintf(w, "warn: %s: %s\n", er.BadEntry.Key, er.Msg)
 		}
 	}
 }
@@ -610,4 +610,20 @@ func (db *Database) CheckPageRanges() {
 			}
 			return ""
 		})
+}
+
+func (db *Database) CheckDuplicateKeys() {
+	keys := make(map[string]bool)
+	dups := make(map[string]*Entry)
+	for _, e := range db.Pubs {
+		kl := strings.ToLower(e.Key)
+		if _, ok := keys[kl]; ok {
+			dups[kl] = e
+		}
+		keys[kl] = true
+	}
+
+	for _, e := range dups {
+		db.addError(e, "", fmt.Sprintf("key \"%s\" is defined more than once", e.Key))
+	}
 }

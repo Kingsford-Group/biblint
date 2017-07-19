@@ -49,7 +49,7 @@ func printSubcommandDesc() {
 }
 
 // doFmt reads a bibtex file and formats it using a "standard" format.
-func doFmt(c *subcommand) bool {
+func doClean(c *subcommand) bool {
 	if c.flags.NArg() < 1 {
 		fmt.Println("error: missing filename in fmt")
 		return false
@@ -75,6 +75,8 @@ func doFmt(c *subcommand) bool {
 	db.RemoveNonBlessedFields([]string{})
 	db.RemoveEmptyFields()
 	db.NormalizeAuthors()
+	db.RemovePeriodFromTitles()
+	db.FixSingleHyphenInPages()
 
 	db.SortByField("year", true)
 
@@ -90,7 +92,7 @@ func main() {
 	log.SetFlags(0)
 
 	// register the subcommands
-	registerSubcommand("fmt", "Format a BibTeX file", doFmt)
+	registerSubcommand("clean", "Clean up nonsense in a BibTeX file", doClean)
 
 	// if no command listed, report error
 	if len(os.Args) == 1 {

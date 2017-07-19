@@ -266,16 +266,19 @@ func splitOnTopLevel(s string) []string {
 	return words
 }
 
-// IsStrangeCase returns true iff s has a capital letter someplace
-// other than the first position
+// IsStrangeCase returns true iff s has a capital letter someplace other than
+// the first position and not preceeded by a - (so Whole-Genome is not in
+// strange case. We also ignore punctuation at the start, so "(Whole-Genome" is
+// also not in strange case. mRNA is.
 func IsStrangeCase(s string) bool {
 	p := 0
+	prevRune := ' '
 	for _, r := range s {
-		if p > 0 {
-			if unicode.IsUpper(r) {
-				return true
-			}
+		if p > 0 && prevRune != '-' && unicode.IsUpper(r) {
+			return true
 		}
+		prevRune = r
+		// we ignore punct at the start of the word to handle cases like "(This"
 		if !unicode.IsPunct(r) {
 			p++
 		}

@@ -25,11 +25,12 @@ DONE:
     - write out the encountered errors
     - include locations in errors
 
-FMT
+CLEAN
 - add {} around " in fields
 - merge adjacent {} nodes?
-- Replace lone - in pages with --
-- remove . from the end of titles
+* Handle Word-Word-Word in IsStrangeCase
+* Replace lone - in pages with --
+* remove . from the end of titles
 * back replace months
 * Sorts entries by year
 * Removes empty fields
@@ -46,6 +47,9 @@ FMT
 
 
 LINT
+- PAges that look like NUMBER - NUMBER
+- Pages A--B where A > B
+- Check for unmatched $
 - Check for "years" that are not INTs
 - Check for volumes, numbers that are not INTs
 - Check for undefined symbols

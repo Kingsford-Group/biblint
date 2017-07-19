@@ -184,6 +184,15 @@ func (db *Database) TransformEachField(trans func(string, *Value) *Value) {
 	}
 }
 
+// TransformField applies the given transformation to each field named "tag"
+func (db *Database) TransformField(tag string, trans func(string, *Value) *Value) {
+	for _, e := range db.Pubs {
+		if value, ok := e.Fields[tag]; ok {
+			e.Fields[tag] = trans(tag, value)
+		}
+	}
+}
+
 // ConvertIntStringsToInt looks for values that are marked as strings but that
 // are really integers and converts them to ints. This happens when a bibtex
 // file has, e.g., volume = {9} instead of volume = 9
@@ -315,4 +324,32 @@ func (db *Database) RemoveWholeFieldBraces() {
 			}
 			return v
 		})
+}
+
+// Removes unneeded "." from the end of the titles. The . must be the last character
+// and it must be preceeded by a lowercase letter
+func (db *Database) RemovePeriodFromTitles() {
+	pend := regexp.MustCompile(`([[:lower:]])\.$`)
+	db.TransformField("title",
+		func(tag string, v *Value) *Value {
+			if v.T == StringType {
+				v.S = pend.ReplaceAllString(v.S, "$1")
+			}
+			return v
+		})
+}
+
+func (db *Database) FixSingleHyphenInPages() {
+	dash := regexp.MustCompile(`([[:digit:]])-([[:digit:]])`)
+	db.TransformField("pages",
+		func(tag string, v *Value) *Value {
+			if v.T == StringType {
+				bt, s := ParseBraceTree(v.S)
+				if s == len(v.S) && bt.ContainsNoBraces() {
+					v.S = dash.ReplaceAllString(v.S, "$1--$2")
+				}
+			}
+			return v
+		})
+
 }

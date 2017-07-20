@@ -466,6 +466,24 @@ func (db *Database) FixHyphensInPages() {
 		})
 }
 
+// for page fields that match aaaa--bb, and where aaaa and bb are integers,
+// replace with aaaa-aabb
+func (db *Database) FixTruncatedPageNumbers() {
+	pages := regexp.MustCompile(`^(\d+)--(\d+)$`)
+	db.TransformField("pages",
+		func(tag string, v *Value) *Value {
+			if v.T == StringType && pages.MatchString(v.S) {
+				ab := pages.FindStringSubmatch(v.S)
+				if len(ab) == 3 {
+					if len(ab[1]) > len(ab[2]) {
+						v.S = fmt.Sprintf("%s--%s", ab[1], ab[1][:len(ab[1])-len(ab[2])]+ab[2])
+					}
+				}
+			}
+			return v
+		})
+}
+
 // RemoveExactDups find entries that are Equal and that have the same Key and deletes one of
 // them.
 func (db *Database) RemoveExactDups() {

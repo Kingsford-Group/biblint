@@ -78,6 +78,7 @@ func doClean(c *subcommand) bool {
 	db.NormalizeAuthors()
 	db.RemovePeriodFromTitles()
 	db.FixHyphensInPages()
+	db.FixTruncatedPageNumbers()
 
 	db.RemoveExactDups()
 

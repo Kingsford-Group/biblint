@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // FieldType represents the type of a data entry
@@ -478,6 +479,51 @@ func (db *Database) FixTruncatedPageNumbers() {
 					if len(ab[1]) > len(ab[2]) {
 						v.S = fmt.Sprintf("%s--%s", ab[1], ab[1][:len(ab[1])-len(ab[2])]+ab[2])
 					}
+				}
+			}
+			return v
+		})
+}
+
+func toGoodTitle(w string) string {
+	titleLowerWords := []string{"the", "a", "an", "but", "for", "and", "or",
+		"nor", "to", "from", "on", "in", "of", "at", "by"}
+
+	tlw := make(map[string]bool)
+	for _, w := range titleLowerWords {
+		tlw[w] = true
+	}
+
+	if _, ok := tlw[w]; !ok {
+		r, size := utf8.DecodeRuneInString(w)
+		w = string(unicode.ToTitle(r)) + w[size:]
+	}
+	return w
+}
+
+func (db *Database) TitleCaseJournalNames() {
+	db.TransformField("journal",
+		func(tag string, v *Value) *Value {
+			if v.T == StringType {
+				// if we can parse the title
+				bt, size := ParseBraceTree(v.S)
+				if size == len(v.S) {
+					// go through each immediate leaf child of the root
+					for _, wordNode := range bt.Children {
+						if wordNode.IsLeaf() {
+
+							// convert each word to good title case
+							leafWords := make([]string, 0)
+							for _, w := range SplitWords(wordNode.Leaf) {
+								leafWords = append(leafWords, toGoodTitle(w))
+							}
+
+							// update the leaf node
+							wordNode.Leaf = strings.Join(leafWords, "")
+						}
+					}
+					// save the string
+					v.S = bt.Flatten()
 				}
 			}
 			return v

@@ -6,7 +6,7 @@ tries to correct common mistakes, and removes information that is not part of
 the "citation". 
 
 **Note that `clean` does NOT guarantee no data loss. In fact, the typical situation is that
-data will be lost (e.g. abstracts are removed from the database)**
+data will be lost (e.g. abstracts and many other fields are removed from the database).**
 
 Specifically, `clean` does the following:
 
@@ -56,6 +56,11 @@ Specifically, `clean` does the following:
 
 - Missing commas after "tag=value" pairs are added
 
+- Lowercase, non-"small" words are capitalized in journal titles (as long as
+  they are outside {} regions). Small words are "the", "a", "an", "but", "for",
+  "and", "or", "nor", "to", "from", "on", "in", "of", "at", "by". (This list is
+  likely to grow.)
+
 ## biblint check
 
 The `check` command looks for problems that can't be fixed by `clean`.
@@ -97,8 +102,7 @@ complicate the parser too much. For example:
 
 - BibTeX supports using () to delimit entries and strings, e.g., `@string(foo =
   "bar")` or `@article(title = "hi there")`. We only support {} in this case.
-  (this might change -- but since so few bib files use () in this case, it's
-  low priority)
+  (this might change -- but since so few bib files use (), it's low priority)
 
 ## Known Bugs / Issues
 

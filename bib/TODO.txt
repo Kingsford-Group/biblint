@@ -46,9 +46,7 @@ CLEAN
 * Format the entries consistently, ordering fields consistently
 * PAges that look like NUMBER - NUMBER -> NUMBER--NUMBER
 * Pages A--B where A > B -> replace B with the expansion based on A
-
-
-- lowercase words in Journal name?
+* lowercase words in Journal name
 
 LINT
 * Lone - instead of --- in title?
@@ -63,8 +61,7 @@ LINT
 
 - Check for malformed author names
 
-
-
+Someday:
 - Pages that only contain symbols ?
 - Check for unmatched $
 - Check for volumes, numbers that are not INTs

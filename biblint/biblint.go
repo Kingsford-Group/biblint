@@ -88,6 +88,7 @@ func doClean(c *subcommand) bool {
 	db.RemovePeriodFromTitles()
 	db.FixHyphensInPages()
 	db.FixTruncatedPageNumbers()
+	db.TitleCaseJournalNames()
 
 	db.RemoveExactDups()
 

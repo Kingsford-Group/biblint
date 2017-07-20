@@ -27,8 +27,6 @@ type BraceNode struct {
 // ParseBraceTree converts a string into a tree of BraceNodes
 func ParseBraceTree(s string) (*BraceNode, int) {
 
-	// walk thru runes, if
-
 	me := &BraceNode{
 		Children: make([]*BraceNode, 0),
 	}

@@ -26,6 +26,9 @@ DONE:
     - include locations in errors
 
 CLEAN
+
+- add option to disable cleaning steps?
+
 - merge adjacent {} nodes?
 * add {} around " in fields
 * Handle Word-Word-Word in IsStrangeCase
@@ -50,6 +53,8 @@ CLEAN
 
 mRNA, DNA are great -> {mRNA,} {DNA} are great
 {mRNA, DNA} are great
+
+- when sorting, expand symbols
 
 LINT
 - Check for malformed author names
@@ -77,10 +82,6 @@ field@entry:line: error message
 DUPS
 * look for duplicate entries that have different keys?
 
-REMOVETAG
-* remove all tags of the given type
-
-
 LIST
     biblint list author
 * list all the values for the given field, along with the pubs that have
@@ -89,6 +90,9 @@ LIST
 * for authors "have that value" means "has that author"
 
 * list all the authors and the pubs with them
+
+REMOVETAG
+* remove all tags of the given type
 
 SORT
 * by key, year, first author, last author, journal (any tag)

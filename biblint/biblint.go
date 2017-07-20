@@ -7,7 +7,10 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 )
+
+const version = "v0.2"
 
 // Represents a function that handles a subcommand
 type subcommandFunc func(*subcommand) bool
@@ -22,15 +25,21 @@ type subcommand struct {
 // subcommands maps a subcommand name to its handler
 var subcommands = make(map[string]*subcommand, 0)
 
+var quiet *bool
+
 // registerSubcommand creates a record for the given subcommand. The handler do
 // will be called when name is used as the subcommand on the command line.
-func registerSubcommand(name, desc string, do subcommandFunc) {
-	subcommands[name] = &subcommand{
+func registerSubcommand(name, desc string, do subcommandFunc) *subcommand {
+	c := &subcommand{
 		name:  name,
 		desc:  desc,
 		flags: flag.NewFlagSet(name, flag.ExitOnError),
 		do:    do,
 	}
+	// define flags that are common to all subcommands
+	quiet = c.flags.Bool("quiet", false, "minimize output messages")
+	subcommands[name] = c
+	return c
 }
 
 // printSubcommandDesc is used by the help system to print out the registered subcommands
@@ -48,9 +57,23 @@ func printSubcommandDesc() {
 	}
 }
 
+func startSubcommand(c *subcommand) bool {
+	c.flags.Parse(os.Args[2:])
+	if !c.flags.Parsed() {
+		c.flags.Usage()
+		return false
+	}
+
+	if !*quiet {
+		printBanner()
+	}
+	return true
+}
+
 func parseBibFromArgs(c *subcommand) (*bib.Database, bool) {
 	if c.flags.NArg() < 1 {
 		fmt.Println("error: missing filename in fmt")
+		c.flags.Usage()
 		return nil, false
 	}
 
@@ -71,9 +94,23 @@ func parseBibFromArgs(c *subcommand) (*bib.Database, bool) {
 
 // doFmt reads a bibtex file and formats it using a "standard" format.
 func doClean(c *subcommand) bool {
+	sortby := c.flags.String("sort", "year", "sorts the entry by `field`")
+	reverse := c.flags.Bool("reverse", true, "reverse the sort order")
+	blessed := c.flags.String("blessed", "", "Comma separated list of blessed `fields`")
+
+	if !startSubcommand(c) {
+		return false
+	}
+
 	db, ok := parseBibFromArgs(c)
 	if !ok {
 		return false
+	}
+
+	// parse the blessed fields
+	blessedArr := strings.Split(*blessed, ",")
+	for i, b := range blessedArr {
+		blessedArr[i] = strings.TrimSpace(strings.ToLower(b))
 	}
 
 	// clean it up
@@ -82,7 +119,7 @@ func doClean(c *subcommand) bool {
 	db.ConvertIntStringsToInt()
 	db.ReplaceSymbols()
 	db.ReplaceAbbrMonths()
-	db.RemoveNonBlessedFields([]string{})
+	db.RemoveNonBlessedFields(blessedArr)
 	db.RemoveEmptyFields()
 	db.NormalizeAuthors()
 	db.RemovePeriodFromTitles()
@@ -92,7 +129,7 @@ func doClean(c *subcommand) bool {
 
 	db.RemoveExactDups()
 
-	db.SortByField("year", true)
+	db.SortByField(*sortby, *reverse)
 
 	// write it out
 	db.WriteDatabase(os.Stdout)
@@ -101,6 +138,10 @@ func doClean(c *subcommand) bool {
 }
 
 func doCheck(c *subcommand) bool {
+	if !startSubcommand(c) {
+		return false
+	}
+
 	db, ok := parseBibFromArgs(c)
 	if !ok {
 		return false
@@ -118,6 +159,10 @@ func doCheck(c *subcommand) bool {
 	db.PrintErrors(os.Stderr)
 
 	return true
+}
+
+func printBanner() {
+	fmt.Printf("biblint %s (c) 2017 Carl Kingsford\n", version)
 }
 
 func main() {
@@ -142,6 +187,5 @@ func main() {
 	if !ok {
 		log.Fatalf("error: %q is not a valid subcommand.\n", os.Args[1])
 	}
-	c.flags.Parse(os.Args[2:])
 	c.do(c)
 }

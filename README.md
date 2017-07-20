@@ -8,6 +8,11 @@ the "citation".
 **Note that `clean` does NOT guarantee no data loss. In fact, the typical situation is that
 data will be lost (e.g. abstracts and many other fields are removed from the database).**
 
+Usage:
+```
+biblint clean in.bib > out.bib
+```
+
 Specifically, `clean` does the following:
 
 - @preamble entries are at the top of the file
@@ -64,6 +69,12 @@ Specifically, `clean` does the following:
 ## biblint check
 
 The `check` command looks for problems that can't be fixed by `clean`.
+
+Usage:
+```
+biblint check in.bib
+```
+
 Specifically, it will report the following problems:
 
 - A lone, white-space-surrounded - instead of ---

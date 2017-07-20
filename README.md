@@ -1,4 +1,13 @@
 
+## Building from Source
+
+1. Install Go from http://golang.org
+2. clone this repo
+3. `cd bibutil/biblint`
+4. `go build`
+
+Currently, `biblint` has no external dependencies beyond Go and its standard library.
+
 ## biblint clean
 
 BibLint's `clean` command tries to format the bib file in a consistent way.  It

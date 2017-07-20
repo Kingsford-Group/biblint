@@ -26,8 +26,8 @@ DONE:
     - include locations in errors
 
 CLEAN
-- add {} around " in fields
 - merge adjacent {} nodes?
+* add {} around " in fields
 * Handle Word-Word-Word in IsStrangeCase
 * Replace lone - in pages with --
 * remove . from the end of titles
@@ -48,7 +48,11 @@ CLEAN
 * Pages A--B where A > B -> replace B with the expansion based on A
 * lowercase words in Journal name
 
+mRNA, DNA are great -> {mRNA,} {DNA} are great
+{mRNA, DNA} are great
+
 LINT
+- Check for malformed author names
 * Lone - instead of --- in title?
 * "et al" appearing in author lists
 * Non-ascii characters anyplace
@@ -59,7 +63,6 @@ LINT
 * Check for duplicate keys
 * Check for missing required fields
 
-- Check for malformed author names
 
 Someday:
 - Pages that only contain symbols ?

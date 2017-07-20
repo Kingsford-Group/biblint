@@ -645,3 +645,23 @@ func (db *Database) CheckDuplicateKeys() {
 		db.addError(e, "", fmt.Sprintf("key \"%s\" is defined more than once", e.Key))
 	}
 }
+
+func (db *Database) CheckRequiredFields() {
+	for _, e := range db.Pubs {
+		if _, ok := required[e.Kind]; ok {
+			for _, req := range required[e.Kind] {
+				found := false
+				for _, r := range strings.Split(req, "/") {
+					if _, ok := e.Fields[r]; ok {
+						found = true
+						break
+					}
+				}
+				if !found {
+					db.addError(e, req,
+						fmt.Sprintf("missing required field \"%s\" in %s", req, e.Kind))
+				}
+			}
+		}
+	}
+}

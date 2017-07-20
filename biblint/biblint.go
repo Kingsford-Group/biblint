@@ -48,23 +48,32 @@ func printSubcommandDesc() {
 	}
 }
 
-// doFmt reads a bibtex file and formats it using a "standard" format.
-func doClean(c *subcommand) bool {
+func parseBibFromArgs(c *subcommand) (*bib.Database, bool) {
 	if c.flags.NArg() < 1 {
 		fmt.Println("error: missing filename in fmt")
-		return false
+		return nil, false
 	}
 
 	// read the bibtex file
 	f, err := os.Open(c.flags.Arg(0))
 	if err != nil {
 		fmt.Printf("error: couldn't open %s\n", c.flags.Arg(0))
-		return false
+		return nil, false
 	}
 	p := bib.NewParser(f)
 	db := p.ParseBibTeX()
 	if p.NErrors() > 0 {
 		p.PrintErrors(os.Stderr)
+	}
+	return db, true
+
+}
+
+// doFmt reads a bibtex file and formats it using a "standard" format.
+func doClean(c *subcommand) bool {
+	db, ok := parseBibFromArgs(c)
+	if !ok {
+		return false
 	}
 
 	// clean it up
@@ -84,6 +93,18 @@ func doClean(c *subcommand) bool {
 
 	db.SortByField("year", true)
 
+	// write it out
+	db.WriteDatabase(os.Stdout)
+	log.Printf("Wrote %d publications.", len(db.Pubs))
+	return true
+}
+
+func doCheck(c *subcommand) bool {
+	db, ok := parseBibFromArgs(c)
+	if !ok {
+		return false
+	}
+
 	db.CheckYearsAreInt()
 	db.CheckEtAl()
 	db.CheckASCII()
@@ -91,11 +112,10 @@ func doClean(c *subcommand) bool {
 	db.CheckPageRanges()
 	db.CheckUndefinedSymbols()
 	db.CheckDuplicateKeys()
+	db.CheckRequiredFields()
+
 	db.PrintErrors(os.Stderr)
 
-	// write it out
-	db.WriteDatabase(os.Stdout)
-	log.Printf("Wrote %d publications.", len(db.Pubs))
 	return true
 }
 
@@ -106,6 +126,7 @@ func main() {
 
 	// register the subcommands
 	registerSubcommand("clean", "Clean up nonsense in a BibTeX file", doClean)
+	registerSubcommand("check", "Look for errors that can't be automatically corrected", doCheck)
 
 	// if no command listed, report error
 	if len(os.Args) == 1 {

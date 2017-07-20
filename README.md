@@ -29,14 +29,17 @@ Specifically, `clean` does the following:
 - @string entries immediately follow any preamble entries. They are listed
   alphabetically sorted by the symbol they define
 
-- Entries follow, sorted in reverse chronological order.
+- Entries follow, sorted in reverse chronological order (i.e. by year, by
+  default). Use `-sort` option to change the field that will be sorted on, and
+  the `-reverse` option to reverse the order (e.g. `-sort journal -reverse
+  false`) will sort alphabetically by journal string.
 
 - Fields that are empty are removed
 
 - Non-blessed fields are removed. A field is blessed if it is a required or
   known optional field *for any entry type* or one of "key", "note", "url",
   "doi", "pmc", "pmid", "keywords", "issn", "isbn".  Note that "abstract" tags
-  are removed.
+  are removed. Use `-blessed f1,f2,f3...` to add additional blessed fields.
 
 - Titles that end with `[[:lower:]]\." have the terminating "." removed.
 
@@ -103,6 +106,10 @@ Specifically, it will report the following problems:
 - Page ranges x--y where y < x
 
 - Missing required fields for each entry type
+
+## Other options
+
+Use `-quiet` to prohibit printing of the banner.
 
 ## Parser "quirks"
 

@@ -128,6 +128,7 @@ func doClean(c *subcommand) bool {
 	db.FixHyphensInPages()
 	db.FixTruncatedPageNumbers()
 	db.TitleCaseJournalNames()
+	db.RemoveContainedEntries()
 
 	db.RemoveExactDups()
 

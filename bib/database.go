@@ -88,8 +88,8 @@ func (db *Database) Less(v1 *Value, v2 *Value) bool {
 	v2 = db.SymbolValue(v2, 10)
 
 	if (v1.T == StringType || v1.T == SymbolType) && (v2.T == StringType || v2.T == SymbolType) {
-		bt1 := ParseBraceTree(v1.S)
-		bt2 := ParseBraceTree(v2.S)
+		bt1, _ := ParseBraceTree(v1.S)
+		bt2, _ := ParseBraceTree(v2.S)
 		return bt1.FlattenForSorting() < bt2.FlattenForSorting()
 	}
 
@@ -600,6 +600,12 @@ func (db *Database) RemoveExactDups() {
 		}
 	}
 
+	db.removeDeleted(ndel)
+}
+
+// removeDeleted removes the entries marked Kind == Deleted. There must be exactly
+// ndel of them (which is passed in for efficiency)
+func (db *Database) removeDeleted(ndel int) {
 	newPubs := make([]*Entry, len(db.Pubs)-ndel)
 	i := 0
 	for _, e := range db.Pubs {
@@ -609,6 +615,44 @@ func (db *Database) RemoveExactDups() {
 		}
 	}
 	db.Pubs = newPubs
+}
+
+// RemoveContainedEntries tries to find entries that are contained in others
+func (db *Database) RemoveContainedEntries() {
+
+	// bin the entries by title
+	byTitle := make(map[string][]*Entry)
+	for _, e := range db.Pubs {
+		// if e has a string field called title
+		if title, ok := e.Fields["title"]; ok {
+			if title.T == StringType {
+				if _, ok := byTitle[title.S]; !ok {
+					byTitle[title.S] = make([]*Entry, 0)
+				}
+				byTitle[title.S] = append(byTitle[title.S], e)
+			}
+		}
+	}
+
+	// within each title group, check each pair (A,B) to see if A is contained
+	// in B. If so, mark it Deleted
+	ndel := 0
+	for _, entries := range byTitle {
+		for i := 0; i < len(entries); i++ {
+			for j := i + 1; j < len(entries); j++ {
+				if entries[i].IsSubset(entries[j]) {
+					entries[i].Kind = Deleted
+					ndel++
+				} else if entries[j].IsSubset(entries[i]) {
+					entries[j].Kind = Deleted
+					ndel++
+				}
+			}
+		}
+	}
+
+	// remove all the deleted
+	db.removeDeleted(ndel)
 }
 
 // CheckField is a helper function that checks the `tag` field in entries

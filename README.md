@@ -57,6 +57,10 @@ Specifically, `clean` does the following:
 - Exact duplicates are removed. Exact dups are those that have the same entry
   type, same key, the same fields, and the same exact values for each field
 
+- If entry A has all the fields of B, with the same values, then A will be
+  deleted.  (if A and B have the same fields, one of them will be deleted
+  arbitrarily).
+
 - {} is used to delimit fields
 
 - If an entire field is braced or if no braces are in the field, individual

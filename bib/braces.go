@@ -187,7 +187,7 @@ func (bn *BraceNode) FlattenToMinBraces() string {
 				}
 				// for non-leaf children, we just flatten as normal
 			} else {
-				words = append(words, c.flatten(false))
+				words = append(words, c.flatten(false, true))
 			}
 
 		}

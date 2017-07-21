@@ -81,23 +81,32 @@ func (bn *BraceNode) IsEntireStringBraced() bool {
 
 // Flatten() return the string represented by the tree as a string
 func (bn *BraceNode) Flatten() string {
-	return bn.flatten(true)
+	return bn.flatten(true, true)
+}
+
+// Like Flatten(), but won't include any {}
+func (bn *BraceNode) FlattenForSorting() string {
+	return bn.flatten(true, false)
 }
 
 // flatten is a helper function that does the work of Flatten() [it exists
 // to handle root nodes specially]
-func (bn *BraceNode) flatten(isroot bool) string {
+func (bn *BraceNode) flatten(isroot bool, inclbraces bool) string {
 	if bn.IsLeaf() {
 		return bn.Leaf
 	} else {
 		words := make([]string, 0)
 		for _, c := range bn.Children {
-			words = append(words, c.flatten(false))
+			words = append(words, c.flatten(false, inclbraces))
 		}
 		if isroot {
 			return strings.Join(words, "")
 		} else {
-			return "{" + strings.Join(words, "") + "}"
+			if inclbraces {
+				return "{" + strings.Join(words, "") + "}"
+			} else {
+				return strings.Join(words, "")
+			}
 		}
 	}
 }

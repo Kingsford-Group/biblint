@@ -30,6 +30,8 @@ CLEAN
 - add option to disable cleaning steps?
 
 - merge adjacent {} nodes?
+* when sorting, compare {} strings correctly
+* when sorting, expand symbols
 * add {} around " in fields
 * Handle Word-Word-Word in IsStrangeCase
 * Replace lone - in pages with --
@@ -54,7 +56,6 @@ CLEAN
 mRNA, DNA are great -> {mRNA,} {DNA} are great
 {mRNA, DNA} are great
 
-- when sorting, expand symbols
 
 LINT
 - Check for malformed author names

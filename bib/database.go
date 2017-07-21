@@ -51,10 +51,43 @@ func (db *Database) PrintErrors(w io.Writer) {
 	}
 }
 
+// Expands symbol definitions to their defined values; if an expansion expands
+// to a symbol itself, then that symbol will be expanded and so on, up to
+// `depth` recursions.  If an undefined symbol is found, we return the
+// unexpanded symbol (at that point). If we exceed the depth, we return where
+// we got to for that depth. These rules mean that the function is a no-op for
+// non-Symbols and undefined Symbols.
+func (db *Database) SymbolValue(symb *Value, depth int) *Value {
+	i := 0
+	// repeat until either we hit a non-symbol, or exceed our recursion depth
+	for i < depth && symb.T == SymbolType {
+		// if this is a user-defined symbol, do the substituion
+		s := strings.ToLower(symb.S)
+		if v, ok := db.Symbols[s]; ok {
+			symb = v
+			i++
+
+			// if we are a predefined symbol, we're done
+		} else if v, ok := predefinedSymbols[s]; ok {
+			return &Value{T: StringType, S: v}
+		} else {
+			return symb
+		}
+	}
+	return symb
+}
+
 // returns true if v1 < v2
-func (v1 *Value) Less(v2 *Value) bool {
+func (db *Database) Less(v1 *Value, v2 *Value) bool {
+
+	// expand the symbols, if appropriate (nop otherwise)
+	v1 = db.SymbolValue(v1, 10)
+	v2 = db.SymbolValue(v2, 10)
+
 	if (v1.T == StringType || v1.T == SymbolType) && (v2.T == StringType || v2.T == SymbolType) {
-		return v1.S < v2.S
+		bt1 := ParseBraceTree(v1.S)
+		bt2 := ParseBraceTree(v2.S)
+		return bt1.FlattenForSorting() < bt2.FlattenForSorting()
 	}
 
 	if v1.T == NumberType && v2.T == NumberType {
@@ -213,7 +246,7 @@ func (db *Database) SortByField(field string, reverse bool) {
 			case !ok1 && !ok2:
 				ans = (e1.Key < e2.Key)
 			case ok1 && ok1:
-				ans = v1.Less(v2)
+				ans = db.Less(v1, v2)
 			}
 
 			if reverse {

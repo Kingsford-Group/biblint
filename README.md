@@ -32,7 +32,14 @@ Specifically, `clean` does the following:
 - Entries follow, sorted in reverse chronological order (i.e. by year, by
   default). Use `-sort` option to change the field that will be sorted on, and
   the `-reverse` option to reverse the order (e.g. `-sort journal -reverse
-  false`) will sort alphabetically by journal string.
+  false`) will sort alphabetically by journal string. Note that the default
+  sorted order is `reverse=true`, so if you want alphabetical, you must turn
+  off reverse.
+
+  biblint tries to be minimally smart about sorting: symbols are expanded to
+  their defined value (recursively, up to depth 10), strings are compared
+  ignoring {}, and if an int and a string are compared, the int is converted to
+  a string and the comparison is done as strings.
 
 - Fields that are empty are removed
 
@@ -41,22 +48,23 @@ Specifically, `clean` does the following:
   "doi", "pmc", "pmid", "keywords", "issn", "isbn".  Note that "abstract" tags
   are removed. Use `-blessed f1,f2,f3...` to add additional blessed fields.
 
-- Titles that end with `[[:lower:]]\." have the terminating "." removed.
+- Titles that end with `[[:lower:]]\.` have the terminating "." removed.
 
 - Pages entries that look like NUMBER -[-] NUMBER are changed to NUMBER--NUMBER
 
 - Pages that are aaaa--bb, where len(a) > len(b), are replaced by aaaa--aabb
 
 - Exact duplicates are removed. Exact dups are those that have the same entry
-  type, the same fields, and the same exact values for each field
+  type, same key, the same fields, and the same exact values for each field
 
-- {} is used to eliminate fields
+- {} is used to delimit fields
 
 - If an entire field is braced or if no braces are in the field, individual
   words that are in strange case will be surrounded by {}. Specifically, {}
   surrounds any word with a " or that has "sTrange" case (an uppercase letter
-  anyplace except the first non-punctuation character). This won't brace things
-  like "(Strange" or "Hyphenated-Word", but will brace "mRNA"
+  anyplace except the first non-punctuation character that is not preceded by a
+  hyphen). This won't brace things like "(Strange" or "Hyphenated-Word", but
+  will brace "mRNA"
 
 - Author names in the "author" field are always given as von Last, First or von
   Last, Jr., First  (names in the "editor" field are not changed)
@@ -115,11 +123,11 @@ Use `-quiet` to prohibit printing of the banner.
 
 The biblint parser accepts some bib syntax that is not officially supported by
 bibtex. This is done for a combination of reasons: sometimes the bib file can
-be parsed correctly and sometimes forcing bibtex syntax to be rejected would
-complicate the parser too much. For example:
+be parsed correctly and sometimes forcing non-bibtex syntax to be rejected
+would complicate the parser too much. For example:
 
 - Commas separating tag=value pairs in an entry are optional --- they will be
-  added by clean if they are missing
+  added by `clean` if they are missing
 
 - `@preamble"foo bar baz"` is accepted in addition to `@preamble{foo bar baz}`.
   Since no one uses @preamble anyway, this is not likely to cause problems.

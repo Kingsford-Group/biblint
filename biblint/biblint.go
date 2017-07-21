@@ -57,6 +57,7 @@ func printSubcommandDesc() {
 	}
 }
 
+// startSubcommand parses the flags and prints the banner
 func startSubcommand(c *subcommand) bool {
 	c.flags.Parse(os.Args[2:])
 	if !c.flags.Parsed() {
@@ -70,6 +71,7 @@ func startSubcommand(c *subcommand) bool {
 	return true
 }
 
+// parseBibFromArgs reads the first argument as a bib file and returns the database
 func parseBibFromArgs(c *subcommand) (*bib.Database, bool) {
 	if c.flags.NArg() < 1 {
 		fmt.Println("error: missing filename in fmt")
@@ -137,6 +139,7 @@ func doClean(c *subcommand) bool {
 	return true
 }
 
+// doCheck run the check command
 func doCheck(c *subcommand) bool {
 	if !startSubcommand(c) {
 		return false
@@ -161,6 +164,7 @@ func doCheck(c *subcommand) bool {
 	return true
 }
 
+// printBanner prints out the version, tool name and copyright info
 func printBanner() {
 	fmt.Printf("biblint %s (c) 2017 Carl Kingsford\n", version)
 }

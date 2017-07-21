@@ -27,12 +27,14 @@ type Value struct {
 	I int
 }
 
+// BibTeXError holds an error found in a bibtex file
 type BibTeXError struct {
 	BadEntry *Entry
 	Tag      string
 	Msg      string
 }
 
+// addError adds an error to the list of reported errors
 func (db *Database) addError(e *Entry, tag string, msg string) {
 	db.Errors = append(db.Errors, &BibTeXError{
 		BadEntry: e,
@@ -41,6 +43,7 @@ func (db *Database) addError(e *Entry, tag string, msg string) {
 	})
 }
 
+// PrintErrors writes all the saved errors to the `w` stream.
 func (db *Database) PrintErrors(w io.Writer) {
 	for _, er := range db.Errors {
 		if er.Tag != "" {
@@ -130,6 +133,7 @@ type Author struct {
 	Jr     string
 }
 
+// Returns true iff an author structure is exactly equal to another
 func (a *Author) Equals(b *Author) bool {
 	return *a == *b
 }
@@ -518,6 +522,8 @@ func (db *Database) FixTruncatedPageNumbers() {
 		})
 }
 
+// toGoodTitle converts a word to title case, meaning the first letter is capitalized
+// unless the word is a "small" word
 func toGoodTitle(w string) string {
 	titleLowerWords := []string{"the", "a", "an", "but", "for", "and", "or",
 		"nor", "to", "from", "on", "in", "of", "at", "by"}
@@ -534,6 +540,7 @@ func toGoodTitle(w string) string {
 	return w
 }
 
+// TitleCaseJournalNames converts the journal name so that big words are capitalized
 func (db *Database) TitleCaseJournalNames() {
 	db.TransformField("journal",
 		func(tag string, v *Value) *Value {
@@ -604,6 +611,8 @@ func (db *Database) RemoveExactDups() {
 	db.Pubs = newPubs
 }
 
+// CheckField is a helper function that checks the `tag` field in entries
+// using the given `check` function
 func (db *Database) CheckField(tag string, check func(*Value) string) {
 	for _, e := range db.Pubs {
 		if v, ok := e.Fields[tag]; ok {
@@ -614,6 +623,7 @@ func (db *Database) CheckField(tag string, check func(*Value) string) {
 	}
 }
 
+// CheckYearsAreInt adds errors if a year is not an integer
 func (db *Database) CheckYearsAreInt() {
 	db.CheckField("year",
 		func(v *Value) string {
@@ -625,6 +635,7 @@ func (db *Database) CheckYearsAreInt() {
 		})
 }
 
+// CheckEtAl reports the error of using "et al" within a author list
 func (db *Database) CheckEtAl() {
 	etal := regexp.MustCompile(`[eE][tT]\s+[aA][lL]`)
 	db.CheckField("author",
@@ -637,6 +648,7 @@ func (db *Database) CheckEtAl() {
 		})
 }
 
+// CheckAllFields is a helper that runs the given check function for each field
 func (db *Database) CheckAllFields(check func(string, *Value) string) {
 	for _, e := range db.Pubs {
 		for tag, value := range e.Fields {
@@ -647,6 +659,7 @@ func (db *Database) CheckAllFields(check func(string, *Value) string) {
 	}
 }
 
+// CheckASCII reports errors where non-ASCII are used in any field
 func (db *Database) CheckASCII() {
 	db.CheckAllFields(
 		func(tag string, v *Value) string {
@@ -661,6 +674,7 @@ func (db *Database) CheckASCII() {
 		})
 }
 
+// CheckUndefinedSymbols reports symbols that are not defined
 func (db *Database) CheckUndefinedSymbols() {
 	db.CheckAllFields(
 		func(tag string, v *Value) string {
@@ -678,6 +692,7 @@ func (db *Database) CheckUndefinedSymbols() {
 		})
 }
 
+// CheckLoneHyphenInTitle reports errors where - is used when --- is probably meant
 func (db *Database) CheckLoneHyphenInTitle() {
 	hyphen := regexp.MustCompile(`\s-\s`)
 	db.CheckField("title",
@@ -689,6 +704,7 @@ func (db *Database) CheckLoneHyphenInTitle() {
 		})
 }
 
+// CheckPageRanges reports errors where a pages looks like X--Y where X > Y
 func (db *Database) CheckPageRanges() {
 	pages := regexp.MustCompile(`^(\d+)--(\d+)$`)
 	db.CheckField("pages",
@@ -709,6 +725,7 @@ func (db *Database) CheckPageRanges() {
 		})
 }
 
+// CheckDuplicateKeys finds entries with duplicate keys
 func (db *Database) CheckDuplicateKeys() {
 	keys := make(map[string]bool)
 	dups := make(map[string]*Entry)
@@ -725,6 +742,7 @@ func (db *Database) CheckDuplicateKeys() {
 	}
 }
 
+// CheckRequiredFields reports any missing required fields
 func (db *Database) CheckRequiredFields() {
 	for _, e := range db.Pubs {
 		if _, ok := required[e.Kind]; ok {

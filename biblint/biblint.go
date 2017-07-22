@@ -159,6 +159,8 @@ func doCheck(c *subcommand) bool {
 	db.CheckUndefinedSymbols()
 	db.CheckDuplicateKeys()
 	db.CheckRequiredFields()
+	db.CheckUnmatchedDollarSigns()
+	db.CheckRedundantSymbols()
 
 	db.PrintErrors(os.Stderr)
 

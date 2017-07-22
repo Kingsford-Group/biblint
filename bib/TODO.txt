@@ -52,6 +52,7 @@ CLEAN
 * PAges that look like NUMBER - NUMBER -> NUMBER--NUMBER
 * Pages A--B where A > B -> replace B with the expansion based on A
 * lowercase words in Journal name
+* Remove entries where onne is contained in another
 
 mRNA, DNA are great -> {mRNA,} {DNA} are great
 {mRNA, DNA} are great
@@ -59,6 +60,7 @@ mRNA, DNA are great -> {mRNA,} {DNA} are great
 
 LINT
 - Check for malformed author names
+* Check for unmatched $
 * Lone - instead of --- in title?
 * "et al" appearing in author lists
 * Non-ascii characters anyplace
@@ -68,13 +70,12 @@ LINT
 * Check for duplicate symbol definitions
 * Check for duplicate keys
 * Check for missing required fields
+* check for two symbols defining same thing
 
 
 Someday:
 - Pages that only contain symbols ?
-- Check for unmatched $
 - Check for volumes, numbers that are not INTs
-- check for two symbols defining same thing?
 
 
 field@entry:line: error message

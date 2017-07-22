@@ -119,6 +119,10 @@ Specifically, it will report the following problems:
 
 - Missing required fields for each entry type
 
+- Fields that have an odd number of un-escaped (with \\) dollar signs
+
+- `@string` definitions that define the same thing
+
 ## Other options
 
 Use `-quiet` to prohibit printing of the banner.
@@ -142,6 +146,7 @@ would complicate the parser too much. For example:
 - BibTeX supports using () to delimit entries and strings, e.g., `@string(foo =
   "bar")` or `@article(title = "hi there")`. We only support {} in this case.
   (this might change -- but since so few bib files use (), it's low priority)
+
 
 ## Known Bugs / Issues
 

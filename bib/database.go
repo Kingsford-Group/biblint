@@ -46,10 +46,14 @@ func (db *Database) addError(e *Entry, tag string, msg string) {
 // PrintErrors writes all the saved errors to the `w` stream.
 func (db *Database) PrintErrors(w io.Writer) {
 	for _, er := range db.Errors {
+		key := "<none>"
+		if er.BadEntry != nil {
+			key = er.BadEntry.Key
+		}
 		if er.Tag != "" {
-			fmt.Fprintf(w, "warn: %s %s: %s\n", er.BadEntry.Key, er.Tag, er.Msg)
+			fmt.Fprintf(w, "warn: %s %s: %s\n", key, er.Tag, er.Msg)
 		} else {
-			fmt.Fprintf(w, "warn: %s: %s\n", er.BadEntry.Key, er.Msg)
+			fmt.Fprintf(w, "warn: %s: %s\n", key, er.Msg)
 		}
 	}
 }
@@ -803,6 +807,52 @@ func (db *Database) CheckRequiredFields() {
 						fmt.Sprintf("missing required field \"%s\" in %s", req, e.Kind))
 				}
 			}
+		}
+	}
+}
+
+func (db *Database) CheckUnmatchedDollarSigns() {
+	db.CheckAllFields(
+		func(tag string, v *Value) string {
+			if v.T == StringType {
+				ndollar := 0
+				escape := false
+				for _, r := range v.S {
+					switch r {
+					case '$':
+						if !escape {
+							ndollar++
+						}
+					case '\\':
+						escape = !escape
+					default:
+						escape = false
+					}
+				}
+				if ndollar%2 != 0 {
+					return "contains unbalanced $"
+				}
+			}
+			return ""
+		})
+}
+
+func (db *Database) CheckRedundantSymbols() {
+	x := make(map[string][]string)
+
+	for sym, val := range db.Symbols {
+		if val.T == StringType {
+			if _, ok := x[val.S]; !ok {
+				x[val.S] = make([]string, 0)
+			}
+			x[val.S] = append(x[val.S], sym)
+		}
+	}
+
+	for repl, syms := range x {
+		if len(syms) > 1 {
+			db.addError(nil, "", fmt.Sprintf("symbols all define \"%s\": %s",
+				repl, strings.Join(syms, ",")))
 		}
 	}
 }

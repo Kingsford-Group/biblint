@@ -11,6 +11,9 @@ import (
 	"unicode/utf8"
 )
 
+var titleLowerWords = []string{"the", "a", "an", "but", "for", "and", "or",
+	"nor", "to", "from", "on", "in", "of", "at", "by"}
+
 // FieldType represents the type of a data entry
 type FieldType int
 
@@ -529,8 +532,6 @@ func (db *Database) FixTruncatedPageNumbers() {
 // toGoodTitle converts a word to title case, meaning the first letter is capitalized
 // unless the word is a "small" word
 func toGoodTitle(w string) string {
-	titleLowerWords := []string{"the", "a", "an", "but", "for", "and", "or",
-		"nor", "to", "from", "on", "in", "of", "at", "by"}
 
 	tlw := make(map[string]bool)
 	for _, w := range titleLowerWords {
@@ -811,6 +812,8 @@ func (db *Database) CheckRequiredFields() {
 	}
 }
 
+// CheckUnmatchedDollarSigns checks whether a string has an odd number of
+// unescaped dollar signs
 func (db *Database) CheckUnmatchedDollarSigns() {
 	db.CheckAllFields(
 		func(tag string, v *Value) string {
@@ -837,6 +840,8 @@ func (db *Database) CheckUnmatchedDollarSigns() {
 		})
 }
 
+// CheckRedudantSymbols finds groups of @string definitions that define the
+// same string
 func (db *Database) CheckRedundantSymbols() {
 	x := make(map[string][]string)
 
@@ -855,4 +860,80 @@ func (db *Database) CheckRedundantSymbols() {
 				repl, strings.Join(syms, ",")))
 		}
 	}
+}
+
+/*=====================================================================================
+ * Duplicate Entrie Checking
+ *====================================================================================*/
+
+// removeNonLetters removes non-letters from a string (also keeping whitespace)
+func removeNonLetters(s string) string {
+	w := ""
+	for _, r := range s {
+		if unicode.IsLetter(r) || unicode.IsSpace(r) {
+			w += string(r)
+		}
+	}
+	return w
+}
+
+// titleHash returns a simplified title useful for grouping pubs
+func titleHash(e *Entry) string {
+	tlw := make(map[string]bool)
+	for _, w := range titleLowerWords {
+		tlw[w] = true
+	}
+
+	// if we have a string title and can parse it
+	if titleval, ok := e.Fields["title"]; ok && titleval.T == StringType {
+		if bt, size := ParseBraceTree(titleval.S); size == len(titleval.S) {
+			words := make([]string, 0)
+
+			for _, w := range strings.Fields(removeNonLetters(bt.FlattenForSorting())) {
+				w = strings.ToLower(w)
+				if _, ok := tlw[w]; !ok {
+					words = append(words, w)
+				}
+			}
+			return strings.Join(words, " ")
+		}
+	}
+	return ""
+}
+
+func (db *Database) FindDupsByTitle() map[string][]*Entry {
+	H := make(map[string][]*Entry)
+	for _, e := range db.Pubs {
+		hash := titleHash(e)
+		if _, ok := H[hash]; !ok {
+			H[hash] = make([]*Entry, 0)
+		}
+		H[hash] = append(H[hash], e)
+	}
+	return H
+}
+
+func (db *Database) RemoveDupsByTitle() {
+	ndel := 0
+	for hash, list := range db.FindDupsByTitle() {
+		if hash != "" && len(list) > 1 {
+			// check all pairs to see if one can be deleted
+			for i := 0; i < len(list); i++ {
+				for j := i + 1; j < len(list); j++ {
+					if list[i].IsSubset(list[j]) {
+						list[i].Kind = Deleted
+						ndel++
+					} else if list[j].IsSubset(list[i]) {
+						list[j].Kind = Deleted
+						ndel++
+					} else {
+						fmt.Printf("%s %s are different somehow\n", list[i].Key, list[j].Key)
+					}
+				}
+			}
+		}
+	}
+
+	// remove all the deleted
+	db.removeDeleted(ndel)
 }

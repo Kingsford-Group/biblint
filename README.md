@@ -59,7 +59,8 @@ Specifically, `clean` does the following:
 
 - If entry A has all the fields of B, with the same values, then A will be
   deleted.  (if A and B have the same fields, one of them will be deleted
-  arbitrarily).
+  arbitrarily). This will be caught if the entries either have the same key
+  or the same title
 
 - {} is used to delimit fields
 

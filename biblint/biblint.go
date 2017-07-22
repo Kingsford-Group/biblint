@@ -167,9 +167,32 @@ func doCheck(c *subcommand) bool {
 	return true
 }
 
+func doDups(c *subcommand) bool {
+	if !startSubcommand(c) {
+		return false
+	}
+
+	db, ok := parseBibFromArgs(c)
+	if !ok {
+		return false
+	}
+
+	for hash, list := range db.FindDupsByTitle() {
+		if hash != "" && len(list) > 1 {
+			fmt.Printf("DUP %s:\n", hash)
+			for _, e := range list {
+				// title field must exist since hash != ""
+				fmt.Printf("   %s \"%s\"\n", e.Key, e.Fields["title"].S)
+			}
+		}
+	}
+
+	return true
+}
+
 // printBanner prints out the version, tool name and copyright info
 func printBanner() {
-	fmt.Printf("biblint %s (c) 2017 Carl Kingsford\n", version)
+	fmt.Fprintf(os.Stderr, "biblint %s (c) 2017 Carl Kingsford\n", version)
 }
 
 func main() {
@@ -180,6 +203,7 @@ func main() {
 	// register the subcommands
 	registerSubcommand("clean", "Clean up nonsense in a BibTeX file", doClean)
 	registerSubcommand("check", "Look for errors that can't be automatically corrected", doCheck)
+	registerSubcommand("dups", "Look for duplicate entries", doDups)
 
 	// if no command listed, report error
 	if len(os.Args) == 1 {

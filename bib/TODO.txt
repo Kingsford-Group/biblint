@@ -77,12 +77,10 @@ Someday:
 - Pages that only contain symbols ?
 - Check for volumes, numbers that are not INTs
 
-
-field@entry:line: error message
-
-
 DUPS
 * look for duplicate entries that have different keys?
+
+
 
 LIST
     biblint list author

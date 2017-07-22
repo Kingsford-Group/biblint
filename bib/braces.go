@@ -59,7 +59,7 @@ func ParseBraceTree(s string) (*BraceNode, int) {
 }
 
 // printIndent prints a given number of spaces (for debugging)
-func printIndent(indent int) {
+func PrintIndent(indent int) {
 	for indent > 0 {
 		fmt.Print(" ")
 		indent--
@@ -114,7 +114,7 @@ func (bn *BraceNode) flatten(isroot bool, inclbraces bool) string {
 //PrintBraceTree is used for debugging --- it prints the brace tree to stdout
 //in a simple format.
 func PrintBraceTree(b *BraceNode, indent int) {
-	printIndent(indent)
+	PrintIndent(indent)
 	if b.Leaf != "" {
 		fmt.Printf("LEAF \"%s\"\n", b.Leaf)
 	} else {

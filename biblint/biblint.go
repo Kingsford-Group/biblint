@@ -182,7 +182,7 @@ func doDups(c *subcommand) bool {
 
 	for hash, list := range db.FindDupsByTitle() {
 		if hash != "" && len(list) > 1 {
-			fmt.Printf("POSSIBLE DUPLICATES:\n")
+			fmt.Printf("Possible Duplicates:\n")
 			for _, e := range list {
 				// title field must exist since hash != ""
 				fmt.Printf("   %s \"%s\"\n", e.Key, e.Fields["title"].S)

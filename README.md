@@ -126,7 +126,7 @@ Specifically, it will report the following problems:
 
 - Last names that have all uppercase, all lowercase, or are empty (trying to
   catch last names resulting from the common mistake of an author = `Smith J
-  H`, which is parsed by BibTeX as first name = "Smith", last name = "J H". 
+  H`, which is parsed by BibTeX as first name = "Smith", last name = "J H".) 
 
 Errors are reported grouped by key in the following format:
 ```
@@ -143,7 +143,32 @@ the two forms:
 where `LINE` is the line number of the _entry_ (the line the `@` appears on)
 and `TAG`, if present, is the tag within the entry that contains the error.
 The line number is given for each message because, in the case of duplicate
-keys, errors can be reported for any of those entries.
+keys, errors can be reported for any of those entries. They key is "<none>" if
+the error doesn't involve an entry.
+
+## biblint dups
+
+The `dups` command tries to find duplicate entries by looking for pairs of entries
+that look like they have the same title. Usage:
+
+```
+biblint dups in.bib
+```
+
+This finds entries where the titles map to the same string, once case,
+punctuation, and small words are removed.
+
+##  Typical Usage
+
+To clean up a bib file, a set of steps to take are:
+
+1. Run `biblint clean in.bib > tmp.bib`
+2. Fix any errors reported by `clean` in `tmp.bib`
+3. Run `biblnt dups tmp.bib`
+4. Remove or fix any true dups reported by `dups` in `tmp.bib`
+5. Run `biblint check tmp.bib`
+6. Fix any errors reported by `check` in tmp.bib
+7. `mv in.bib bad.bib && mv tmp.bib in.bib`
 
 ## Other options
 

@@ -124,6 +124,10 @@ Specifically, it will report the following problems:
 
 - `@string` definitions that define the same thing
 
+- Last names that have all uppercase, all lowercase, or are empty (trying to
+  catch last names resulting from the common mistake of an author = `Smith J
+  H`, which is parsed by BibTeX as first name = "Smith", last name = "J H". 
+
 Errors are reported grouped by key in the following format:
 ```
 Key "salmon":
@@ -137,8 +141,8 @@ the two forms:
   LINE:TAG: message
 ```
 where `LINE` is the line number of the _entry_ (the line the `@` appears on)
-and `TAG` if present is the tag within the entry that contains the error. Note
-that the line number is given for each message because in the case of duplicate
+and `TAG`, if present, is the tag within the entry that contains the error.
+The line number is given for each message because, in the case of duplicate
 keys, errors can be reported for any of those entries.
 
 ## Other options

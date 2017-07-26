@@ -310,6 +310,8 @@ func (p *Parser) parseEntry() *Entry {
 
 	// @ IDENT { IDENT , [IDENT = [STRING|IDENT] COMMA]* }
 	entry := newEntry()
+	line, _ := p.curToken.Position()
+	entry.LineNo = line
 
 	// read the entry type, which should be followed by a LBRACE
 	if !p.expectPeek(lexer.IDENT) {

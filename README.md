@@ -124,6 +124,23 @@ Specifically, it will report the following problems:
 
 - `@string` definitions that define the same thing
 
+Errors are reported grouped by key in the following format:
+```
+Key "salmon":
+  2105: key "salmon" is defined more than once
+  1178:volume: missing required field "volume" in article
+```
+Each group starts with `Key` followed by the key in quotes. Each error is of
+the two forms:
+```
+  LINE: message
+  LINE:TAG: message
+```
+where `LINE` is the line number of the _entry_ (the line the `@` appears on)
+and `TAG` if present is the tag within the entry that contains the error. Note
+that the line number is given for each message because in the case of duplicate
+keys, errors can be reported for any of those entries.
+
 ## Other options
 
 Use `-quiet` to prohibit printing of the banner.

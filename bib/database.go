@@ -48,17 +48,39 @@ func (db *Database) addError(e *Entry, tag string, msg string) {
 
 // PrintErrors writes all the saved errors to the `w` stream.
 func (db *Database) PrintErrors(w io.Writer) {
+	byKey := make(map[string][]string)
+	keys := make([]string, 0)
+
 	for _, er := range db.Errors {
 		key := "<none>"
+		line := 0
 		if er.BadEntry != nil {
 			key = er.BadEntry.Key
+			line = er.BadEntry.LineNo
 		}
+		if _, ok := byKey[key]; !ok {
+			byKey[key] = make([]string, 0)
+			keys = append(keys, key)
+		}
+
+		var msg string
 		if er.Tag != "" {
-			fmt.Fprintf(w, "warn: %s %s: %s\n", key, er.Tag, er.Msg)
+			msg = fmt.Sprintf("%d:%s: %s", line, er.Tag, er.Msg)
 		} else {
-			fmt.Fprintf(w, "warn: %s: %s\n", key, er.Msg)
+			msg = fmt.Sprintf("%d: %s", line, er.Msg)
 		}
+		byKey[key] = append(byKey[key], msg)
 	}
+
+	sort.Strings(keys)
+	for _, k := range keys {
+		fmt.Fprintf(w, "Key %q:\n", k)
+		for _, msg := range byKey[k] {
+			fmt.Fprintf(w, "  %s\n", msg)
+		}
+		fmt.Fprintln(w)
+	}
+
 }
 
 // Expands symbol definitions to their defined values; if an expansion expands
@@ -152,6 +174,7 @@ type Entry struct {
 	Key         string
 	Fields      map[string]*Value
 	AuthorList  []*Author
+	LineNo      int
 }
 
 // IsSubset returns true if this entnry is a subset of the given one. An e1 is
@@ -672,12 +695,55 @@ func (db *Database) CheckField(tag string, check func(*Value) string) {
 	}
 }
 
+// isAllCaps returns true if every letter in the string is a uppercase
+func isAllCaps(s string) bool {
+	for _, r := range s {
+		if unicode.IsLetter(r) && !unicode.IsUpper(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// isAllLower returns true iff every letter in the string is a lowercase letter
+func isAllLower(s string) bool {
+	for _, r := range s {
+		if unicode.IsLetter(r) && !unicode.IsLower(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// CheckAuthorLast checks for authors where the last name parsed like "J H" or "JH" or "J.H."
+// or if the last name is all lowercase. Must have called db.NormalizeAuthors(), otherwise
+// this is a no-op
+func (db *Database) CheckAuthorLast() {
+	for _, e := range db.Pubs {
+		if e.AuthorList != nil {
+			for _, a := range e.AuthorList {
+				if a.Others == true {
+					continue
+				}
+				if strings.TrimSpace(a.Last) == "" {
+					db.addError(e, "author", fmt.Sprintf("name %v has empty last name", a))
+				} else if isAllCaps(a.Last) {
+					db.addError(e, "author", fmt.Sprintf("name %v has no lowercase in last name", a))
+				} else if isAllLower(a.Last) {
+					db.addError(e, "author", fmt.Sprintf("last name in %v is all lowercase", a.Last))
+				}
+			}
+		}
+	}
+
+}
+
 // CheckYearsAreInt adds errors if a year is not an integer
 func (db *Database) CheckYearsAreInt() {
 	db.CheckField("year",
 		func(v *Value) string {
 			if v.T == StringType {
-				return fmt.Sprintf("year is not an integer \"%s\"", v.S)
+				return fmt.Sprintf("year is not an integer %q", v.S)
 			} else {
 				return ""
 			}
@@ -735,7 +801,7 @@ func (db *Database) CheckUndefinedSymbols() {
 				if _, ok := predefinedSymbols[ls]; ok {
 					return ""
 				}
-				return fmt.Sprintf("symbol \"%s\" is undefined", v.S)
+				return fmt.Sprintf("symbol %q is undefined", v.S)
 			}
 			return ""
 		})
@@ -787,7 +853,7 @@ func (db *Database) CheckDuplicateKeys() {
 	}
 
 	for _, e := range dups {
-		db.addError(e, "", fmt.Sprintf("key \"%s\" is defined more than once", e.Key))
+		db.addError(e, "", fmt.Sprintf("key %q is defined more than once", e.Key))
 	}
 }
 
@@ -805,7 +871,7 @@ func (db *Database) CheckRequiredFields() {
 				}
 				if !found {
 					db.addError(e, req,
-						fmt.Sprintf("missing required field \"%s\" in %s", req, e.Kind))
+						fmt.Sprintf("missing required field %q in %s", req, e.Kind))
 				}
 			}
 		}
@@ -856,7 +922,7 @@ func (db *Database) CheckRedundantSymbols() {
 
 	for repl, syms := range x {
 		if len(syms) > 1 {
-			db.addError(nil, "", fmt.Sprintf("symbols all define \"%s\": %s",
+			db.addError(nil, "", fmt.Sprintf("symbols all define %q: %s",
 				repl, strings.Join(syms, ",")))
 		}
 	}

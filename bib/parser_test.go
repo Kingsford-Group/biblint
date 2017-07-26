@@ -126,3 +126,10 @@ func TestIsStrangeCase(t *testing.T) {
 	const in = "nOW"
 	fmt.Println(IsStrangeCase(in))
 }
+
+func TestBadAuthors(t *testing.T) {
+	const in = "Smart J.H."
+	a := NormalizeName(in)
+	//fmt.Printf("(%s)(%s)(%s)\n", f, v, l)
+	fmt.Printf("%v\n", a)
+}

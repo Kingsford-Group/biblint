@@ -162,6 +162,9 @@ func doCheck(c *subcommand) bool {
 	db.CheckUnmatchedDollarSigns()
 	db.CheckRedundantSymbols()
 
+	db.NormalizeAuthors()
+	db.CheckAuthorLast()
+
 	db.PrintErrors(os.Stderr)
 
 	return true

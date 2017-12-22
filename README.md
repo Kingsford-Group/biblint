@@ -2,9 +2,13 @@
 ## Building from Source
 
 1. Install Go from http://golang.org
-2. clone this repo
+2. clone this repo into `$GOHOME/src/github.com/Kingsford-Group`
 3. `cd bibutil/biblint`
 4. `go build`
+
+You can do step two via `go get github.com/Kingsford-Group/biblint/biblint`
+(need to list path to the biblint command, which is why `biblint` appears twice
+at the end)
 
 Currently, `biblint` has no external dependencies beyond Go and its standard library.
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Kingsford-Group/bibutil/bib"
+	"github.com/Kingsford-Group/biblint/bib"
 	"flag"
 	"fmt"
 	"log"

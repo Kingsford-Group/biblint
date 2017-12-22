@@ -156,19 +156,29 @@ biblint dups in.bib
 ```
 
 This finds entries where the titles map to the same string, once case,
-punctuation, and small words are removed.
+punctuation, and small words are removed. It reports the dups by key and title,
+but does not remove or modify the entries.
 
 ##  Typical Usage
+
+### Cleaning bad bib files:
 
 To clean up a bib file, a set of steps to take are:
 
 1. Run `biblint clean in.bib > tmp.bib`
-2. Fix any errors reported by `clean` in `tmp.bib`
-3. Run `biblnt dups tmp.bib`
+2. Fix any errors reported by `clean` in `tmp.bib`; goto 1 until no errors
+3. Run `biblint dups tmp.bib`
 4. Remove or fix any true dups reported by `dups` in `tmp.bib`
 5. Run `biblint check tmp.bib`
 6. Fix any errors reported by `check` in tmp.bib
 7. `mv in.bib bad.bib && mv tmp.bib in.bib`
+
+### Merging files:
+
+The way to merge two or more files is to `cat` them and then run the cleaning
+pipeline above.  If the bib files contain true duplicates or one file contains
+strictly more information than the other for an entry, the dups or less
+informative entries will be removed by `clean`.
 
 ## Other options
 

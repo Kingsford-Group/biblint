@@ -86,6 +86,17 @@ DUPS
 
     - cluster by cleaned title
 
+EXTRACT
+
+* biblint extract in.bib listofids.aux
+
+listofids.aux can be either:
+a list of \citation{a,b,c,d,e} commands
+or a list of a b c d entry keys 
+
+IMPORT to.bib from.bib > combined.bib
+
+if a field exists in from.key add it to to.key if it is not already in to.key
 
 LIST
     biblint list author

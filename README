@@ -1,1 +1,6 @@
 Bibutil is a set of programs to work with BibTeX files
+
+You should put this package in $GOPATH/src/github.com/Kingsford-Group/
+
+or get it via "go get github.com/Kingsford-Group/biblint"
+

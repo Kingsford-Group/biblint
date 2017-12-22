@@ -1,7 +1,7 @@
 package bib
 
 import (
-	"ckingsford/bibutil/lexer"
+	"github.com/Kingsford-Group/bibutil/lexer"
 	"fmt"
 	"io"
 	"sort"

@@ -582,7 +582,7 @@ func (db *Database) TitleCaseJournalNames() {
 
 							// convert each word to good title case
 							leafWords := make([]string, 0)
-							for _, w := range SplitWords(wordNode.Leaf) {
+							for _, w := range splitWords(wordNode.Leaf) {
 								leafWords = append(leafWords, toGoodTitle(w))
 							}
 

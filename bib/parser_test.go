@@ -80,7 +80,7 @@ func TestBraces(t *testing.T) {
 	//const in = "Hi there is this a normal string"
 	b, l := ParseBraceTree(in)
 	fmt.Printf("lens = %d read = %d\n", len(in), l)
-	PrintBraceTree(b, 0)
+	b.printBraceTree(0)
 	fmt.Printf("STRING = \"%s\"\n", b.Flatten())
 }
 
@@ -107,7 +107,7 @@ func IsEntireStringBracedAlternative(s string) bool {
 
 func TestSplitWords(t *testing.T) {
 	const in = "hi there   moo man   \t  what"
-	s := SplitWords(in)
+	s := splitWords(in)
 	for i, w := range s {
 		fmt.Printf("%d: \"%s\"\n", i, w)
 	}

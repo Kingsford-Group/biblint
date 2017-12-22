@@ -59,7 +59,7 @@ func ParseBraceTree(s string) (*BraceNode, int) {
 }
 
 // printIndent prints a given number of spaces (for debugging)
-func PrintIndent(indent int) {
+func printIndent(indent int) {
 	for indent > 0 {
 		fmt.Print(" ")
 		indent--
@@ -113,22 +113,22 @@ func (bn *BraceNode) flatten(isroot bool, inclbraces bool) string {
 
 //PrintBraceTree is used for debugging --- it prints the brace tree to stdout
 //in a simple format.
-func PrintBraceTree(b *BraceNode, indent int) {
-	PrintIndent(indent)
+func (b *BraceNode) printBraceTree(indent int) {
+	printIndent(indent)
 	if b.Leaf != "" {
 		fmt.Printf("LEAF \"%s\"\n", b.Leaf)
 	} else {
 		fmt.Println("NODE")
 		for _, c := range b.Children {
-			PrintBraceTree(c, indent+2)
+			c.printBraceTree(indent+2)
 		}
 	}
 }
 
-// SplitWords returns an array of strings, where each entry is either a
+// splitWords returns an array of strings, where each entry is either a
 // sequence of non-whitespace chars, or a sequence of whitepace chars. s ==
 // strings.Join(return, "")
-func SplitWords(s string) []string {
+func splitWords(s string) []string {
 	words := make([]string, 0)
 	word := ""
 	c, _ := utf8.DecodeRuneInString(s)
@@ -178,7 +178,7 @@ func (bn *BraceNode) FlattenToMinBraces() string {
 		for _, c := range children {
 			// for leaf children, we iterate through the words
 			if c.IsLeaf() {
-				for _, w := range SplitWords(c.Leaf) {
+				for _, w := range splitWords(c.Leaf) {
 					if IsStrangeCase(w) || HasQuote(w) {
 						words = append(words, "{"+w+"}")
 					} else {

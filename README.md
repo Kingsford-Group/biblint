@@ -3,7 +3,7 @@
 
 1. Install Go from http://golang.org
 2. clone this repo into `$GOHOME/src/github.com/Kingsford-Group`
-3. `cd bibutil/biblint`
+3. `cd biblint/biblint`
 4. `go build`
 
 You can do step two via `go get github.com/Kingsford-Group/biblint/biblint`

@@ -1,35 +1,40 @@
+This file contains notes, todo items, and an incomplete record of features
+implemented. It's just a scratch file and shouldn't be considered
+authoritative. 
 
 
-LINT
-
-- Find authors that are misformatted
-- Find " that are not in {}
-
-/*
 TODO:
-    - write additional unit tests and have them acutally check the output
-    - handle #
-    - handle {"}'s in strings
-
-BUGS:
+=====
+- add option to disable cleaning steps?
+- merge adjacent {} nodes?
+    mRNA, DNA are great -> {mRNA,} {DNA} are great
+    should be {mRNA, DNA} are great
+- Pages that only contain symbols ?
+- Check for volumes, numbers that are not INTs
+- implement biblint extract in.bib listofids.aux
+    listofids.aux can be either:
+    a list of \citation{a,b,c,d,e} commands
+    or a list of a b c d entry keys 
+- write additional unit tests and have them acutally check the output
+- handle #
 
 DONE:
-    - Find titles that are entirely enclosed in {}
-    - Find all caps words that are not inside {} and strange caps words
-        (i.e. any word that isn't Xxxx or xxxx)
-    - remove empty fields
-    - recognize quoted ints
-    - parse author names
-    - handle @preamble
-    - handle integer IDENT
-    - write out the encountered errors
-    - include locations in errors
+=====
 
-CLEAN
+- Find " that are not in {}
+- Find titles that are entirely enclosed in {}
+- Find all caps words that are not inside {} and strange caps words
+    (i.e. any word that isn't Xxxx or xxxx)
+- remove empty fields
+- recognize quoted ints
+- parse author names
+- handle @preamble
+- handle integer IDENT
+- write out the encountered errors
+- include locations in errors
 
-- add option to disable cleaning steps?
+In Clean:
 
-- merge adjacent {} nodes?
 * when sorting, compare {} strings correctly
 * when sorting, expand symbols
 * add {} around " in fields
@@ -54,10 +59,6 @@ CLEAN
 * lowercase words in Journal name
 * Remove entries where onne is contained in another
 
-mRNA, DNA are great -> {mRNA,} {DNA} are great
-{mRNA, DNA} are great
-
-
 LINT
 * Check for malformed author names
 * Check for unmatched $
@@ -72,27 +73,12 @@ LINT
 * Check for missing required fields
 * check for two symbols defining same thing
 
-
-Foo, Foo, Foo, Foo
-Smart J H
-
-
-Someday:
-- Pages that only contain symbols ?
-- Check for volumes, numbers that are not INTs
-
 DUPS
 * look for duplicate entries that have different keys?
+    * cluster by cleaned title
 
-    - cluster by cleaned title
-
-EXTRACT
-
-* biblint extract in.bib listofids.aux
-
-listofids.aux can be either:
-a list of \citation{a,b,c,d,e} commands
-or a list of a b c d entry keys 
+NOTES AND IDEAS FOR FUTURE:
+===========================
 
 IMPORT to.bib from.bib > combined.bib
 
@@ -104,7 +90,6 @@ LIST
   that value
   sort the values by "similar" values
 * for authors "have that value" means "has that author"
-
 * list all the authors and the pubs with them
 
 REMOVETAG
@@ -116,6 +101,6 @@ SORT
 
 GENKEYS
 * generate keys from records using various patterns
-biblint genkeys "{author1}:{year}"
+    biblint genkeys "{author1}:{year}"
 
 

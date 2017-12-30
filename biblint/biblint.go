@@ -117,7 +117,9 @@ func doClean(c *subcommand) bool {
 
 	// clean it up
 	db.NormalizeWhitespace()
+    //db.CanonicalBrace()
 	db.RemoveWholeFieldBraces()
+    db.ConvertTitlesToMinBraces()
 	db.ConvertIntStringsToInt()
 	db.ReplaceSymbols()
 	db.ReplaceAbbrMonths()
@@ -165,7 +167,7 @@ func doCheck(c *subcommand) bool {
 	db.NormalizeAuthors()
 	db.CheckAuthorLast()
 
-	db.PrintErrors(os.Stderr)
+	db.PrintErrors(os.Stdout)
 
 	return true
 }

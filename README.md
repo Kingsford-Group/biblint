@@ -28,7 +28,8 @@ biblint clean in.bib > out.bib
 
 Specifically, `clean` does the following:
 
-- @preamble entries are at the top of the file
+- @preamble entries are moved to the top of the file (in the order they appear
+  in the file)
 
 - @string entries immediately follow any preamble entries. They are listed
   alphabetically sorted by the symbol they define
@@ -68,12 +69,15 @@ Specifically, `clean` does the following:
 
 - {} is used to delimit fields
 
-- If an entire field is braced or if no braces are in the field, individual
-  words that are in strange case will be surrounded by {}. Specifically, {}
-  surrounds any word with a " or that has "sTrange" case (an uppercase letter
-  anyplace except the first non-punctuation character that is not preceded by a
-  hyphen). This won't brace things like "(Strange" or "Hyphenated-Word", but
-  will brace "mRNA"
+- If an entire field is braced, they are removed. This can be wrong, but the
+  more common problem is that someone has double braced every field to avoid
+  dealing with BibTeX quirks.
+
+- Individual words in `title` or `booktitle` entires that are in strange case
+  will be surrounded by {}. Specifically, {} surrounds any word with a " or
+  that has "sTrange" case (an uppercase letter anyplace except the first
+  non-punctuation character that is not preceded by a hyphen). This won't brace
+  things like "(Strange" or "Hyphenated-Word", but will brace "mRNA"
 
 - Author names in the "author" field are always given as von Last, First or von
   Last, Jr., First  (names in the "editor" field are not changed)
@@ -88,12 +92,20 @@ Specifically, `clean` does the following:
 
 - Consecutive, unbraced whitespace will be replaced by a single space character
 
+- Non-quoted whitespace is removed from the start and end of any value
+
 - Missing commas after "tag=value" pairs are added
+
+- if an entry contains duplicate "tag=" entries, the *first* one is kept (as in
+  BibTeX) with a warning
 
 - Lowercase, non-"small" words are capitalized in journal titles (as long as
   they are outside {} regions). Small words are "the", "a", "an", "but", "for",
   "and", "or", "nor", "to", "from", "on", "in", "of", "at", "by". (This list is
   likely to grow.)
+
+- `@comment` lines and non-entry text are removed
+
 
 ## biblint check
 
@@ -198,18 +210,21 @@ would complicate the parser too much. For example:
 - Commas separating tag=value pairs in an entry are optional --- they will be
   added by `clean` if they are missing
 
-- `@preamble"foo bar baz"` is accepted in addition to `@preamble{foo bar baz}`.
-  Since no one uses @preamble anyway, this is not likely to cause problems.
-  (We do this since the lexer knows about both "" and {} strings and, once
-  lexed, treats them the same. The only place this is not true in bibtex is the
-  @preamble.
+- BibTeX allows both {} and () to eliminate string, preamble, and entry types
+  (but not key values, which must be either {} or ""). That is, you can say
+  `@article(key,title="foo")`. We also allow both () and {} but we also allow
+  {) and (}. We will convert all these to {}.
 
-- BibTeX supports using () to delimit entries and strings, e.g., `@string(foo =
-  "bar")` or `@article(title = "hi there")`. We only support {} in this case.
-  (this might change -- but since so few bib files use (), it's low priority)
+- `@comment` in BibTeX comments to the end of the line. This is what we do as
+  well. We strip all comments from the output .bib file. Someday, it might be
+  nice to preserve @comment comments (but not non-entry junk) in the output.
 
 
 ## Known Bugs / Issues
 
 - We do not yet support the `#` string concatenation operator.
+
+- A value of the form `"strange {title here"` will be converted to `strange
+  {title here}`. That is unmatched opening `{` will be closed at the end of a
+  string. Escaping with `\{` doesn't stop this from happening. 
 

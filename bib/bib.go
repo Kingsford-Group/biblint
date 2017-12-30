@@ -20,6 +20,7 @@ type EntryKind string
 
 const (
 	Deleted       EntryKind = "**DELETED**"
+    Comment                 = "comment"
 	Other                   = "other"
 	String                  = "string"
 	Preamble                = "preamble"
@@ -41,6 +42,7 @@ const (
 // identToKind maps a (lowercase) string into the EntryKind type
 var identToKind = map[string]EntryKind{
 	"other":         Other,
+    "comment":       Comment,
 	"string":        String,
 	"preamble":      Preamble,
 	"article":       Article,
@@ -100,7 +102,7 @@ var optional = map[EntryKind][]string{
 
 // blessed lists fields that are neither required nor "optional" but that are
 // commonly used in bibtex entries. We treat "key" and "note" as blessed
-// instead of "optional", since those fields are "optional" for any entry type
+// instead of "optional", since those fields are "optional" for any entry type (except unpublished)
 var blessed = []string{"key", "note", "url", "doi", "pmc", "pmid", "keywords", "issn", "isbn"}
 
 // predefinedSymbols lists the predefined symbols
@@ -274,26 +276,54 @@ func (p *Parser) readTagValue(entry *Entry) bool {
 		return false
 	}
 
-	// save the data into the entry
-	entry.Fields[tag] = v
+    if _, ok := entry.Fields[tag]; ok {
+       p.addError(fmt.Sprintf("tag %s occurs more than once in entry %s", tag, entry.Key))
+    } else {
+        // save the data into the entry
+        entry.Fields[tag] = v
+    }
 	return true
 }
 
 // parsePreamble handles parsing @preamble{text text text} entries.
 func (p *Parser) parsePreamble() *Entry {
-	entry := newEntry()
-	p.bracesAsString = true
-	entry.Kind = Preamble
-	entry.EntryString = p.curToken.Literal
+
+    // preamble { STRING }
+
 	if !p.expectPeek(lexer.IDENT) {
 		return nil
 	}
+
+    // {
+	p.bracesAsString = true // need this here so that this peek reads a string after it
+    defer func() {p.bracesAsString = false}()
+
+	if !p.expectPeek(lexer.LBRACE) {
+		return nil
+	}
+
+    // read the string either as ""  or {}
+	entry := newEntry()
+	entry.Kind = Preamble
+	entry.EntryString = p.curToken.Literal
+
+    // STRING
 	if !p.expectPeek(lexer.STRING) {
 		return nil
 	}
 	entry.Key = p.curToken.Literal
 	p.bracesAsString = false
+
+    // }
+    if !p.expectPeek(lexer.RBRACE) {
+        return nil
+    }
 	return entry
+}
+
+// should be called when peekToken is "comment"
+func (p *Parser) parseComment() {
+    p.lex.SkipToNewLine()
 }
 
 // parseEntry reads an @type{tag=value, tag=value, ...} entry It will handle
@@ -307,6 +337,12 @@ func (p *Parser) parseEntry() *Entry {
 	if p.peekTokenIs(lexer.IDENT) && toEntryKind(p.peekToken.Literal) == Preamble {
 		return p.parsePreamble()
 	}
+
+    // a @comment goes until the end of the line
+    if p.peekTokenIs(lexer.IDENT) && toEntryKind(p.peekToken.Literal) == Comment {
+        p.parseComment()
+        return nil
+    }
 
 	// @ IDENT { IDENT , [IDENT = [STRING|IDENT] COMMA]* }
 	entry := newEntry()
@@ -357,10 +393,10 @@ func (p *Parser) parseEntry() *Entry {
 
 		// if the entry ends with a COMMA, eat it up
 
-		// XXX: note that this reads incorrectly formated bibtex with missing
-		// commas between k/v pairs. Those commas are "uncessary" but required
-		// --- so we will parse some badly formated bibtex, but get the "right"
-		// answer anyway
+        // NOTE: this reads incorrectly formated bibtex with missing commas
+        // between k/v pairs. Those commas are "unnecessary" but required ---
+        // so we will parse some badly formated bibtex, but get the "right"
+        // answer anyway
 
 		if p.peekTokenIs(lexer.COMMA) {
 			p.advanceTokens()
@@ -472,8 +508,10 @@ func writeEntry(w io.Writer, e *Entry) {
 	// print the blessed fields
 	for _, tag := range blessed {
 		if v, ok := e.Fields[tag]; ok {
-			writeTagValue(w, tag, v)
-			printed[tag] = true
+            if _, ok := printed[tag]; !ok {
+		    	writeTagValue(w, tag, v)
+			    printed[tag] = true
+            }
 		}
 	}
 
@@ -510,7 +548,7 @@ func writeSymbol(w io.Writer, k string, v *Value) {
 
 // writePreamble writes an @preamble entnry for the given string
 func writePreamble(w io.Writer, k string) {
-	fmt.Fprintf(w, "@preamble{%s}\n", k)
+	fmt.Fprintf(w, "@preamble{\"%s\"}\n", k)
 }
 
 // writeDatabase writes the entire database to w

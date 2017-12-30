@@ -119,6 +119,14 @@ func (l *Lexer) skipWhitespace() error {
 	return l.Err()
 }
 
+// skipToNewLine skips until the current run is '\n'
+func (l *Lexer) SkipToNewLine() error {
+    for l.curRune() != '\n' {
+        l.nextRune()
+    }
+    return l.Err()
+}
+
 // readQuoteString reads the quoted string. It assumes that the current rune is
 // *not* part of the string (e.g. it is the opening ") and it will not include
 // terminating " in the returned string on error, the string will be nonsense
@@ -142,13 +150,13 @@ func (l *Lexer) readQuoteString() (string, error) {
 }
 
 // readIdent reads an identifier which is a continugous string on non-space
-// characters that are not @#,{}=" which are the special characters used by
+// characters that are not @#,{}="( which are the special characters used by
 // bibtex
 func (l *Lexer) readIdent() (string, error) {
 	b := []rune{l.curRune()}
 
 	for l.nextRune() {
-		if unicode.IsSpace(l.curRune()) || strings.ContainsRune("@#,{}=\"", l.curRune()) {
+		if unicode.IsSpace(l.curRune()) || strings.ContainsRune("@#,{}=\"(", l.curRune()) {
 			return string(b), l.Err()
 		} else {
 			b = append(b, l.curRune())
@@ -223,9 +231,12 @@ func (l *Lexer) NextToken(braceStrings bool) (*Token, error) {
 	case ',':
 		t = l.newToken(COMMA, ",")
 		l.nextRune()
-	case '}':
+    case '}':
 		t = l.newToken(RBRACE, "}")
 		l.nextRune()
+    case ')': // ) acts as a } where it can
+        t = l.newToken(RBRACE, ")")
+        l.nextRune()
 	case '=':
 		t = l.newToken(EQUALS, "=")
 		l.nextRune()
@@ -246,6 +257,10 @@ func (l *Lexer) NextToken(braceStrings bool) (*Token, error) {
 			}
 			t = l.newToken(STRING, s)
 		}
+
+    case '(':
+        t = l.newToken(LBRACE, "(")
+        l.nextRune()
 
 	case '"':
 		s, err := l.readQuoteString()

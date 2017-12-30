@@ -81,7 +81,7 @@ func (bn *BraceNode) IsEntireStringBraced() bool {
 
 // Flatten() return the string represented by the tree as a string
 func (bn *BraceNode) Flatten() string {
-	return bn.flatten(true, true)
+	return strings.TrimSpace(bn.flatten(true, true))
 }
 
 // Like Flatten(), but won't include any {}
@@ -168,7 +168,7 @@ func (bn *BraceNode) FlattenToMinBraces() string {
 	var children []*BraceNode = nil
 	if bn.IsEntireStringBraced() {
 		children = bn.Children[0].Children
-	} else if bn.ContainsNoBraces() {
+	} else { //if bn.ContainsNoBraces() {
 		children = bn.Children
 	}
 
@@ -303,3 +303,65 @@ func HasQuote(w string) bool {
 	}
 	return false
 }
+
+func (bn *BraceNode) AllSpace() bool {
+    if !bn.IsLeaf() { 
+        return false
+    }
+    for _, r := range bn.Leaf {
+        if !unicode.IsSpace(r) {
+            return false
+        }
+    }
+    return true
+}
+
+func (bn *BraceNode) EndWithSpace() bool {
+    if !bn.IsLeaf() { 
+        return false
+    }
+    inspace := false
+    for _, r := range bn.Leaf {
+        inspace = unicode.IsSpace(r)
+    }
+    return inspace;
+}
+
+func (bn *BraceNode) CanonicalBrace() string {
+    // newchildren = new grouping of existing children of bn
+    newchildren := make([]*BraceNode, 0)
+
+    // C = current group
+    C := &BraceNode{Children: make([]*BraceNode, 0)}
+
+    // scan through children
+    for _, c := range bn.Children {
+
+        // if it's a "nonempty" node, group it with last
+        if !c.IsLeaf() || (c.IsLeaf() && !c.EndWithSpace()) {
+            C.Children = append(C.Children, c)
+
+        // if it's an empty node, end this group 
+        } else if c.IsLeaf() && c.EndWithSpace() {
+            if len(C.Children) == 1 {
+                newchildren = append(newchildren, C.Children[0])
+            } else if len(C.Children) > 1 {
+                newchildren = append(newchildren, C)
+            }
+            newchildren = append(newchildren, c)
+
+            C = &BraceNode{Children: make([]*BraceNode, 0)}
+        }
+    }
+    // handle final group, if any
+    if len(C.Children) == 1 {
+        newchildren = append(newchildren, C.Children[0])
+    } else if len(C.Children) > 1 {
+        newchildren = append(newchildren, C)
+    }
+
+    // transplant the children
+    bn.Children = newchildren
+    return bn.Flatten()
+}
+

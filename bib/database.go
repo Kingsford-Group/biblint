@@ -490,6 +490,36 @@ func (db *Database) RemoveEmptyFields() {
 	}
 }
 
+/*
+foo moo{bar}moo  -> foo {moo{bar}moo} 
+
+{moo bar} -> {moo bar}
+
+{m{oo} bar} -> {{mo{oo}} bar}
+
+{m{oo bar}}
+
+moo-CHILD-moo-CHILD-moo -> 
+
+*/
+
+
+// BraceQuotes replaces any word foo"bar with {foo"bar"}. the most common
+// situation is foo\"{e}bar. Note that word here is defined as a whitespace
+// separated string of chars. We do *not* take into account the {} structure
+// so: {hi\"{e} there} because {{hi\"{e}} there}
+func (db *Database) CanonicalBrace() {
+    db.TransformEachField(
+        func(tag string, v *Value) *Value {
+            if v.T == StringType && tag != "author" {
+                if bn, size := ParseBraceTree(v.S); size == len(v.S) {
+                    v.S = bn.CanonicalBrace()
+                }
+            }
+            return v
+        })
+}
+
 // RemoveWholeFieldBraces removes the braces from fields that look like:
 // {{foo bar baz}}
 func (db *Database) RemoveWholeFieldBraces() {
@@ -497,6 +527,25 @@ func (db *Database) RemoveWholeFieldBraces() {
 		func(tag string, v *Value) *Value {
 			// we only transform non-author, string-type fields
 			if v.T == StringType && tag != "author" {
+				if bn, size := ParseBraceTree(v.S); size == len(v.S) {
+                    if bn.IsEntireStringBraced() {
+                        v.S = bn.Children[0].Flatten()
+                    } else {
+					    v.S = bn.Flatten()
+                    }
+				}
+			}
+			return v
+		})
+}
+
+// ConvertTitlesToMinBraces makes sure that all strange-case words are in {}
+// {{foo bar baz}}
+func (db *Database) ConvertTitlesToMinBraces() {
+	db.TransformEachField(
+		func(tag string, v *Value) *Value {
+			// we only transform non-author, string-type fields
+			if v.T == StringType && (tag == "title" || tag == "booktitle") {
 				if bn, size := ParseBraceTree(v.S); size == len(v.S) {
 					v.S = bn.FlattenToMinBraces()
 				}

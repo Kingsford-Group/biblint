@@ -224,7 +224,7 @@ would complicate the parser too much. For example:
 
 - We do not yet support the `#` string concatenation operator.
 
-- A value of the form `"strange {title here"` will be converted to `strange
+- A title of the form `"strange {title here"` will be converted to `strange
   {title here}`. That is unmatched opening `{` will be closed at the end of a
   string. Escaping with `\{` doesn't stop this from happening. 
 

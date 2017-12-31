@@ -125,6 +125,70 @@ func (b *BraceNode) printBraceTree(indent int) {
 	}
 }
 
+// needsBrace checks to see if we need a brace. this is true if
+// - the string contains a " outside a {}
+// - the string contains a {} pair that doesn't enclose the
+//   entire string. E.g. {{hi there}} does not need a brace, but
+//   foo{moo bar}buz does, as does {moo}{fuz}. So does: }}there{{ 
+//   this boils down to checking whether there is a '{' someplace
+//   outside of a {}
+func needsBrace(s string) bool {
+    past := false
+    nbrace := 0
+    for _, r := range s {
+        switch r {
+        case '{': nbrace++; if past && nbrace <= 1 { return true; }
+        case '}': nbrace--
+        case '"': if nbrace <= 0 { return true; }
+        default: past = true
+        }
+    }
+    return false
+}
+
+// canonicalBrace returns a string with braces put into a canonical
+// form.  This means that "a gather{moo bar}fuz b" -> "a {gather{moo
+// bar}fuz}"
+func canonicalBrace(s string) string {
+    words := make([]string, 0)
+    word := ""
+    nbrace := 0
+
+    // adds a non-empty word in word to words
+    appendWord := func () {
+        if len(word) > 0 {
+            if needsBrace(word) {
+                words = append(words, "{"+word+"}")
+            } else {
+                words = append(words, word)
+            }
+            word = ""
+        }
+    }
+
+    for _, r := range s {
+        switch r {
+        case '{': nbrace++
+        case '}': nbrace--
+        }
+
+        // if inside a word:
+        if !unicode.IsSpace(r) || nbrace > 0 {
+            word = word + string(r)
+
+        // if outside a word
+        } else if unicode.IsSpace(r) {
+            // if we have a word to add, we do
+            appendWord()
+            // add the space to the list of words
+            words = append(words, string(r))
+        }
+    }
+    appendWord()
+
+    return strings.Join(words, "")
+}
+
 // splitWords returns an array of strings, where each entry is either a
 // sequence of non-whitespace chars, or a sequence of whitepace chars. s ==
 // strings.Join(return, "")
@@ -163,19 +227,10 @@ func (bn *BraceNode) ContainsNoBraces() bool {
 // user didn't put any thought into it: specifically, only if the entire string
 // is {] or none of the string is {}.
 func (bn *BraceNode) FlattenToMinBraces() string {
-	// only modify if it looks like the user didn't really think about
-	// the braces (the most common case)
-	var children []*BraceNode = nil
-	if bn.IsEntireStringBraced() {
-		children = bn.Children[0].Children
-	} else { //if bn.ContainsNoBraces() {
-		children = bn.Children
-	}
-
-	if children != nil {
+	if bn.Children != nil {
 		words := make([]string, 0)
 
-		for _, c := range children {
+		for _, c := range bn.Children {
 			// for leaf children, we iterate through the words
 			if c.IsLeaf() {
 				for _, w := range splitWords(c.Leaf) {
@@ -325,43 +380,5 @@ func (bn *BraceNode) EndWithSpace() bool {
         inspace = unicode.IsSpace(r)
     }
     return inspace;
-}
-
-func (bn *BraceNode) CanonicalBrace() string {
-    // newchildren = new grouping of existing children of bn
-    newchildren := make([]*BraceNode, 0)
-
-    // C = current group
-    C := &BraceNode{Children: make([]*BraceNode, 0)}
-
-    // scan through children
-    for _, c := range bn.Children {
-
-        // if it's a "nonempty" node, group it with last
-        if !c.IsLeaf() || (c.IsLeaf() && !c.EndWithSpace()) {
-            C.Children = append(C.Children, c)
-
-        // if it's an empty node, end this group 
-        } else if c.IsLeaf() && c.EndWithSpace() {
-            if len(C.Children) == 1 {
-                newchildren = append(newchildren, C.Children[0])
-            } else if len(C.Children) > 1 {
-                newchildren = append(newchildren, C)
-            }
-            newchildren = append(newchildren, c)
-
-            C = &BraceNode{Children: make([]*BraceNode, 0)}
-        }
-    }
-    // handle final group, if any
-    if len(C.Children) == 1 {
-        newchildren = append(newchildren, C.Children[0])
-    } else if len(C.Children) > 1 {
-        newchildren = append(newchildren, C)
-    }
-
-    // transplant the children
-    bn.Children = newchildren
-    return bn.Flatten()
 }
 

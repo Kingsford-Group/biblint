@@ -117,8 +117,8 @@ func doClean(c *subcommand) bool {
 
 	// clean it up
 	db.NormalizeWhitespace()
-    //db.CanonicalBrace()
 	db.RemoveWholeFieldBraces()
+    db.CanonicalBrace()
     db.ConvertTitlesToMinBraces()
 	db.ConvertIntStringsToInt()
 	db.ReplaceSymbols()

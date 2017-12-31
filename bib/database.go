@@ -504,6 +504,7 @@ moo-CHILD-moo-CHILD-moo ->
 */
 
 
+
 // BraceQuotes replaces any word foo"bar with {foo"bar"}. the most common
 // situation is foo\"{e}bar. Note that word here is defined as a whitespace
 // separated string of chars. We do *not* take into account the {} structure
@@ -512,9 +513,7 @@ func (db *Database) CanonicalBrace() {
     db.TransformEachField(
         func(tag string, v *Value) *Value {
             if v.T == StringType && tag != "author" {
-                if bn, size := ParseBraceTree(v.S); size == len(v.S) {
-                    v.S = bn.CanonicalBrace()
-                }
+                v.S = canonicalBrace(v.S)
             }
             return v
         })

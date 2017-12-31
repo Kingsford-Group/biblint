@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const version = "v0.2"
+const version = "v0.3"
 
 // Represents a function that handles a subcommand
 type subcommandFunc func(*subcommand) bool

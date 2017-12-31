@@ -80,7 +80,7 @@ func TestBraces(t *testing.T) {
 	//const in = "Hi there is this a normal string"
 	b, l := ParseBraceTree(in)
 	fmt.Printf("lens = %d read = %d\n", len(in), l)
-	b.printBraceTree(0)
+	b.PrintBraceTree(0)
 	fmt.Printf("STRING = \"%s\"\n", b.Flatten())
 }
 
@@ -118,7 +118,7 @@ func TestFlattenToMinBraces(t *testing.T) {
 	const in = "RiboGalaxy: A browser based platform for the alignment, analysis and visualization of ribosome profiling data"
 	//const in = "Now is the moo time"
 	bn, _ := ParseBraceTree(in)
-	PrintBraceTree(bn, 0)
+	bn.PrintBraceTree(0)
 	fmt.Println(bn.FlattenToMinBraces())
 }
 

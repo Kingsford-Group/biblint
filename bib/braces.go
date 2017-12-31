@@ -113,14 +113,14 @@ func (bn *BraceNode) flatten(isroot bool, inclbraces bool) string {
 
 //PrintBraceTree is used for debugging --- it prints the brace tree to stdout
 //in a simple format.
-func (b *BraceNode) printBraceTree(indent int) {
+func (b *BraceNode) PrintBraceTree(indent int) {
 	printIndent(indent)
 	if b.Leaf != "" {
 		fmt.Printf("LEAF \"%s\"\n", b.Leaf)
 	} else {
 		fmt.Println("NODE")
 		for _, c := range b.Children {
-			c.printBraceTree(indent+2)
+			c.PrintBraceTree(indent+2)
 		}
 	}
 }

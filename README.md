@@ -79,6 +79,8 @@ Specifically, `clean` does the following:
   non-punctuation character that is not preceded by a hyphen). This won't brace
   things like "(Strange" or "Hyphenated-Word", but will brace "mRNA"
 
+- If an author field ends with `\set\s*al.?` it is replaced by " and others".
+
 - Author names in the "author" field are always given as von Last, First or von
   Last, Jr., First  (names in the "editor" field are not changed)
 

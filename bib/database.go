@@ -490,20 +490,18 @@ func (db *Database) RemoveEmptyFields() {
 	}
 }
 
-/*
-foo moo{bar}moo  -> foo {moo{bar}moo} 
-
-{moo bar} -> {moo bar}
-
-{m{oo} bar} -> {{mo{oo}} bar}
-
-{m{oo bar}}
-
-moo-CHILD-moo-CHILD-moo -> 
-
-*/
-
-
+// ReplaceAuthorEtAl changes a terminnating "et al." to the
+// correct "and others" inside of author fields.
+func (db *Database) ReplaceAuthorEtAl() {
+	etal := regexp.MustCompile(`\s[eE][tT]\s+[aA][lL]\.?$`)
+    db.TransformField("author", 
+		func(tag string, v *Value) *Value {
+			if v.T == StringType {
+                v.S = etal.ReplaceAllString(v.S, " and others")
+            }
+            return v
+        })
+}
 
 // BraceQuotes replaces any word foo"bar with {foo"bar"}. the most common
 // situation is foo\"{e}bar. Note that word here is defined as a whitespace
@@ -800,7 +798,7 @@ func (db *Database) CheckYearsAreInt() {
 
 // CheckEtAl reports the error of using "et al" within a author list
 func (db *Database) CheckEtAl() {
-	etal := regexp.MustCompile(`[eE][tT]\s+[aA][lL]`)
+	etal := regexp.MustCompile(` [eE][tT]\s+[aA][lL]`)
 	db.CheckField("author",
 		func(v *Value) string {
 			if v.T == StringType && etal.MatchString(v.S) {

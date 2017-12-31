@@ -20,6 +20,15 @@ TODO:
 
 DONE:
 =====
+x check outputs messages to stdout instead of stderr
+x Fix preamble string bug so it outputs {" ... "} instead of { }
+x only strange-case handle the title and booktitle?
+x remove whitespace at start and end of fields
+x correctly read preamble
+x handle @comment on input (deleted on output)
+x allow () to deliminate entries
+x check for duplicate key=value pairs
+x handle moo\"{e}bar correctly -> {moo\"{e}bar}
 
 - Find " that are not in {}
 - Find titles that are entirely enclosed in {}

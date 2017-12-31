@@ -125,6 +125,7 @@ func doClean(c *subcommand) bool {
 	db.ReplaceAbbrMonths()
 	db.RemoveNonBlessedFields(blessedArr)
 	db.RemoveEmptyFields()
+    db.ReplaceAuthorEtAl()
 	db.NormalizeAuthors()
 	db.RemovePeriodFromTitles()
 	db.FixHyphensInPages()

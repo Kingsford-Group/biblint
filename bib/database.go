@@ -1,3 +1,4 @@
+// (c) 2018 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
 package bib
 
 import (

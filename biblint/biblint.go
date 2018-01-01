@@ -1,3 +1,4 @@
+// (c) 2018 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
 package main
 
 import (
@@ -10,7 +11,7 @@ import (
 	"strings"
 )
 
-const version = "v0.3"
+const version = "v0.4"
 
 // Represents a function that handles a subcommand
 type subcommandFunc func(*subcommand) bool
@@ -200,7 +201,7 @@ func doDups(c *subcommand) bool {
 
 // printBanner prints out the version, tool name and copyright info
 func printBanner() {
-	fmt.Fprintf(os.Stderr, "biblint %s (c) 2017 Carl Kingsford\n", version)
+	fmt.Fprintf(os.Stderr, "biblint %s (c) 2017-2018 Carl Kingsford. See LICENSE.txt.\n", version)
 }
 
 func registerAllSubcommands() {

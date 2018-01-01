@@ -25,7 +25,7 @@ type subcommand struct {
 // subcommands maps a subcommand name to its handler
 var subcommands = make(map[string]*subcommand, 0)
 
-var quiet *bool
+var quiet bool
 
 // registerSubcommand creates a record for the given subcommand. The handler do
 // will be called when name is used as the subcommand on the command line.
@@ -37,7 +37,7 @@ func registerSubcommand(name, desc string, do subcommandFunc) *subcommand {
 		do:    do,
 	}
 	// define flags that are common to all subcommands
-	quiet = c.flags.Bool("quiet", false, "minimize output messages")
+	c.flags.BoolVar(&quiet, "quiet", false, "minimize output messages")
 	subcommands[name] = c
 	return c
 }
@@ -65,7 +65,7 @@ func startSubcommand(c *subcommand) bool {
 		return false
 	}
 
-	if !*quiet {
+	if !quiet {
 		printBanner()
 	}
 	return true
@@ -139,7 +139,9 @@ func doClean(c *subcommand) bool {
 
 	// write it out
 	db.WriteDatabase(os.Stdout)
-	log.Printf("Wrote %d publications.", len(db.Pubs))
+    if !quiet {
+        log.Printf("Wrote %d publications.", len(db.Pubs))
+    }
 	return true
 }
 
@@ -201,15 +203,19 @@ func printBanner() {
 	fmt.Fprintf(os.Stderr, "biblint %s (c) 2017 Carl Kingsford\n", version)
 }
 
+func registerAllSubcommands() {
+	// register the subcommands
+	registerSubcommand("clean", "Clean up nonsense in a BibTeX file", doClean)
+	registerSubcommand("check", "Look for errors that can't be automatically corrected", doCheck)
+	registerSubcommand("dups", "Look for duplicate entries", doDups)
+}
+
 func main() {
 	log.SetOutput(os.Stderr)
 	log.SetPrefix("biblint: ")
 	log.SetFlags(0)
 
-	// register the subcommands
-	registerSubcommand("clean", "Clean up nonsense in a BibTeX file", doClean)
-	registerSubcommand("check", "Look for errors that can't be automatically corrected", doCheck)
-	registerSubcommand("dups", "Look for duplicate entries", doDups)
+    registerAllSubcommands()
 
 	// if no command listed, report error
 	if len(os.Args) == 1 {

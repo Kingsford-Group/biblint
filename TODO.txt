@@ -17,6 +17,7 @@ TODO:
     or a list of a b c d entry keys 
 - write additional unit tests and have them acutally check the output
 - handle #
+- check for lone "{" inside quoted string
 
 DONE:
 =====
@@ -29,6 +30,7 @@ x handle @comment on input (deleted on output)
 x allow () to deliminate entries
 x check for duplicate key=value pairs
 x handle moo\"{e}bar correctly -> {moo\"{e}bar}
+x deal with et al.
 
 - Find " that are not in {}
 - Find titles that are entirely enclosed in {}

@@ -220,7 +220,7 @@ func main() {
 
 	// if no command listed, report error
 	if len(os.Args) == 1 {
-		fmt.Println("usage: biblint <commad> [<args>]")
+		fmt.Println("usage: biblint <command> [<args>]")
 		fmt.Println("The most commonly used biblint commands are: ")
 		printSubcommandDesc()
 		return

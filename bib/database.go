@@ -280,7 +280,7 @@ func (db *Database) SortByField(field string, reverse bool) {
 				ans = false
 			case !ok1 && !ok2:
 				ans = (e1.Key < e2.Key)
-			case ok1 && ok1:
+			case ok1 && ok2:
 				ans = db.Less(v1, v2)
 			}
 

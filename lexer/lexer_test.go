@@ -11,7 +11,7 @@ func TestLexer(t *testing.T) {
 	const in = "//moo or what @article{fur, title = \"Now is \\\"the\\\" {time}\", author={Carl {Kingsford}}, pages=32@"
 
 	bstring := false
-	l := NewLexer(strings.NewReader(in))
+	l := New(strings.NewReader(in))
 	tok, err := l.NextToken(bstring)
 
 	for err == nil && tok != EOFToken {

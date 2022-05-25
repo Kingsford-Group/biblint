@@ -97,7 +97,7 @@ func parseBibFromArgs(c *subcommand) (*bib.Database, bool) {
 
 // doClean reads a bibtex file and formats it using a "standard" format.
 func doClean(c *subcommand) bool {
-	sortby := c.flags.String("sort", "year", "sorts the entry by `field`")
+	sortby := c.flags.String("sort", "year", "sorts the entry by `field` or `none` to skip sort")
 	reverse := c.flags.Bool("reverse", true, "reverse the sort order")
 	blessed := c.flags.String("blessed", "", "Comma separated list of blessed `fields`")
 
@@ -221,7 +221,7 @@ func main() {
 
 	// if no command listed, report error
 	if len(os.Args) == 1 {
-		fmt.Println("usage: biblint <commad> [<args>]")
+		fmt.Println("usage: biblint <command> [<args>]")
 		fmt.Println("The most commonly used biblint commands are: ")
 		printSubcommandDesc()
 		return

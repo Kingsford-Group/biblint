@@ -267,6 +267,9 @@ func (ps *pubSorter) Swap(i, j int) {
 // by Key. Uses the value.Less function to determine the order. If reverse is
 // true, this order will be reversed.
 func (db *Database) SortByField(field string, reverse bool) {
+	if field == "none" {
+		return
+	}
 	ps := &pubSorter{
 		pubs: db.Pubs,
 		by: func(e1, e2 *Entry) bool {
@@ -280,7 +283,7 @@ func (db *Database) SortByField(field string, reverse bool) {
 				ans = false
 			case !ok1 && !ok2:
 				ans = (e1.Key < e2.Key)
-			case ok1 && ok1:
+			case ok1 && ok2:
 				ans = db.Less(v1, v2)
 			}
 

@@ -1,4 +1,4 @@
-// (c) 2018 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
+// (c) 2018-2022 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
 package lexer
 
 /*
@@ -27,7 +27,7 @@ type Token struct {
 	colno   int
 }
 
-// The types of tokens that the lexer can return
+// The types of tokens that the lexer can return.
 const (
 	ILLEGAL TokenType = "ILLEGAL"
 	EOF               = "EOF"
@@ -59,7 +59,7 @@ type Lexer struct {
 	colno  int
 }
 
-// NewLexer returns a new lexer than will return a stream of tokens in
+// New returns a new lexer than will return a stream of tokens in
 // the bibtex language.
 func New(f io.Reader) *Lexer {
 	l := Lexer{
@@ -98,17 +98,17 @@ func (l *Lexer) Position() (int, int) {
 	return l.lineno, l.colno
 }
 
-// curRune returns the rune that was last read by nextRune()
+// curRune returns the rune that was last read by nextRune.
 func (l *Lexer) curRune() rune {
 	return l.ch
 }
 
-// Err returns the last recorded error
+// Err returns the last recorded error.
 func (l *Lexer) Err() error {
 	return l.err
 }
 
-// skipWhiteSpace skips until the current rune is a non-whitespace character
+// skipWhiteSpace skips until the current rune is a non-whitespace character.
 func (l *Lexer) skipWhitespace() error {
 	first := true
 	for first || l.nextRune() {
@@ -120,19 +120,19 @@ func (l *Lexer) skipWhitespace() error {
 	return l.Err()
 }
 
-// skipToNewLine skips until the current run is '\n'
+// SkipToNewLine skips until the current run is '\n'.
 func (l *Lexer) SkipToNewLine() error {
-    for l.curRune() != '\n' {
-        l.nextRune()
-    }
-    return l.Err()
+	for l.curRune() != '\n' {
+		l.nextRune()
+	}
+	return l.Err()
 }
 
 // readQuoteString reads the quoted string. It assumes that the current rune is
 // *not* part of the string (e.g. it is the opening ") and it will not include
 // terminating " in the returned string on error, the string will be nonsense
 // handles \" escapes to include literal quotes in the string. It consumes
-// the final "
+// the final ".
 func (l *Lexer) readQuoteString() (string, error) {
 	escape := false
 	b := make([]rune, 0)
@@ -150,9 +150,9 @@ func (l *Lexer) readQuoteString() (string, error) {
 	return "", l.Err()
 }
 
-// readIdent reads an identifier which is a continugous string on non-space
+// readIdent reads an identifier which is a continuous string on non-space
 // characters that are not @#,{}="( which are the special characters used by
-// bibtex
+// bibtex.
 func (l *Lexer) readIdent() (string, error) {
 	b := []rune{l.curRune()}
 
@@ -166,10 +166,10 @@ func (l *Lexer) readIdent() (string, error) {
 	return "", l.Err()
 }
 
-// readBracesString reads a {} deliminated string. {} pairs can be nested and
+// readBracesString reads a {} delimitated string. {} pairs can be nested and
 // are handled correctly. \{ and \} are treated property as plain characters
 // assumes that the current rune is *not* part of the string (i.e. it is the
-// opening '{'
+// opening '{'.
 func (l *Lexer) readBracesString() (string, error) {
 	escape := false
 	b := make([]rune, 0)
@@ -208,10 +208,10 @@ func (l *Lexer) newToken(t TokenType, s string) *Token {
 	}
 }
 
-// NextToken produces the next token. Assumes curRune() will give the next
-// unprocessed character we must maintain the above invariant after newLexer()
-// and nextToken()) If braceStrings is true, treats {}-deliminated regions
-// as a string (requiring balanced {} strings)
+// NextToken produces the next token. Assumes curRune will give the next
+// unprocessed character. We must maintain that invariant after New
+// and nextToken. If braceStrings is true, treats {}-delimitated regions
+// as a string (requiring balanced {} strings).
 func (l *Lexer) NextToken(braceStrings bool) (*Token, error) {
 
 	// move past any whitespace
@@ -232,12 +232,12 @@ func (l *Lexer) NextToken(braceStrings bool) (*Token, error) {
 	case ',':
 		t = l.newToken(COMMA, ",")
 		l.nextRune()
-    case '}':
+	case '}':
 		t = l.newToken(RBRACE, "}")
 		l.nextRune()
-    case ')': // ) acts as a } where it can
-        t = l.newToken(RBRACE, ")")
-        l.nextRune()
+	case ')': // ) acts as a } where it can
+		t = l.newToken(RBRACE, ")")
+		l.nextRune()
 	case '=':
 		t = l.newToken(EQUALS, "=")
 		l.nextRune()
@@ -259,9 +259,9 @@ func (l *Lexer) NextToken(braceStrings bool) (*Token, error) {
 			t = l.newToken(STRING, s)
 		}
 
-    case '(':
-        t = l.newToken(LBRACE, "(")
-        l.nextRune()
+	case '(':
+		t = l.newToken(LBRACE, "(")
+		l.nextRune()
 
 	case '"':
 		s, err := l.readQuoteString()

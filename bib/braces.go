@@ -1,4 +1,4 @@
-// (c) 2018 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
+// (c) 2018-2022 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
 package bib
 
 import (
@@ -25,7 +25,7 @@ type BraceNode struct {
 	Leaf     string
 }
 
-// ParseBraceTree converts a string into a tree of BraceNodes
+// ParseBraceTree converts a string into a tree of BraceNodes.
 func ParseBraceTree(s string) (*BraceNode, int) {
 
 	me := &BraceNode{
@@ -59,7 +59,7 @@ func ParseBraceTree(s string) (*BraceNode, int) {
 	return me, i
 }
 
-// printIndent prints a given number of spaces (for debugging)
+// printIndent prints a given number of spaces (for debugging).
 func printIndent(indent int) {
 	for indent > 0 {
 		fmt.Print(" ")
@@ -67,31 +67,31 @@ func printIndent(indent int) {
 	}
 }
 
-// IsLeaf() returns true if this BraceNode represents a leaf
+// IsLeaf returns true if this BraceNode represents a leaf.
 func (bn *BraceNode) IsLeaf() bool {
 	return len(bn.Children) == 0
 }
 
-// IsEntireStringBraced() returns true iff the entire string is enclosed in a
+// IsEntireStringBraced returns true iff the entire string is enclosed in a
 // {} {Moo}{Bar} returns false, but {Moo Bar} returns true. Technically, this
 // is checked by testing whether the root node has a single child that is
-// itself a braceNode (and not a leaf)
+// itself a braceNode (and not a leaf).
 func (bn *BraceNode) IsEntireStringBraced() bool {
 	return len(bn.Children) == 1 && !bn.Children[0].IsLeaf()
 }
 
-// Flatten() return the string represented by the tree as a string
+// Flatten returns the string represented by the tree as a string.
 func (bn *BraceNode) Flatten() string {
 	return strings.TrimSpace(bn.flatten(true, true))
 }
 
-// Like Flatten(), but won't include any {}
+// FlattenForSorting is like Flatten, but won't include any {}.
 func (bn *BraceNode) FlattenForSorting() string {
 	return bn.flatten(true, false)
 }
 
-// flatten is a helper function that does the work of Flatten() [it exists
-// to handle root nodes specially]
+// flatten is a helper function that does the work of Flatten. It exists
+// to handle root nodes specially.
 func (bn *BraceNode) flatten(isroot bool, inclbraces bool) string {
 	if bn.IsLeaf() {
 		return bn.Leaf
@@ -112,8 +112,8 @@ func (bn *BraceNode) flatten(isroot bool, inclbraces bool) string {
 	}
 }
 
-//PrintBraceTree is used for debugging --- it prints the brace tree to stdout
-//in a simple format.
+// PrintBraceTree is used for debugging --- it prints the brace tree to stdout
+// in a simple format.
 func (b *BraceNode) PrintBraceTree(indent int) {
 	printIndent(indent)
 	if b.Leaf != "" {
@@ -121,78 +121,89 @@ func (b *BraceNode) PrintBraceTree(indent int) {
 	} else {
 		fmt.Println("NODE")
 		for _, c := range b.Children {
-			c.PrintBraceTree(indent+2)
+			c.PrintBraceTree(indent + 2)
 		}
 	}
 }
 
-// needsBrace checks to see if we need a brace. this is true if
+// needsBrace checks to see if we need a brace. This is true if
 // - the string contains a " outside a {}
 // - the string contains a {} pair that doesn't enclose the
 //   entire string. E.g. {{hi there}} does not need a brace, but
-//   foo{moo bar}buz does, as does {moo}{fuz}. So does: }}there{{ 
+//   foo{moo bar}buz does, as does {moo}{fuz}. So does: }}there{{
 //   this boils down to checking whether there is a '{' someplace
-//   outside of a {}
+//   outside of a {}.
 func needsBrace(s string) bool {
-    past := false
-    nbrace := 0
-    for _, r := range s {
-        switch r {
-        case '{': nbrace++; if past && nbrace <= 1 { return true; }
-        case '}': nbrace--
-        case '"': if nbrace <= 0 { return true; }
-        default: past = true
-        }
-    }
-    return false
+	past := false
+	nbrace := 0
+	for _, r := range s {
+		switch r {
+		case '{':
+			nbrace++
+			if past && nbrace <= 1 {
+				return true
+			}
+		case '}':
+			nbrace--
+		case '"':
+			if nbrace <= 0 {
+				return true
+			}
+		default:
+			past = true
+		}
+	}
+	return false
 }
 
 // canonicalBrace returns a string with braces put into a canonical
 // form.  This means that "a gather{moo bar}fuz b" -> "a {gather{moo
-// bar}fuz}"
+// bar}fuz}".
 func canonicalBrace(s string) string {
-    words := make([]string, 0)
-    word := ""
-    nbrace := 0
+	words := make([]string, 0)
+	word := ""
+	nbrace := 0
 
-    // adds a non-empty word in word to words
-    appendWord := func () {
-        if len(word) > 0 {
-            if needsBrace(word) {
-                words = append(words, "{"+word+"}")
-            } else {
-                words = append(words, word)
-            }
-            word = ""
-        }
-    }
+	// adds a non-empty word in word to words
+	appendWord := func() {
+		if len(word) > 0 {
+			if needsBrace(word) {
+				words = append(words, "{"+word+"}")
+			} else {
+				words = append(words, word)
+			}
+			word = ""
+		}
+	}
 
-    for _, r := range s {
-        switch r {
-        case '{': nbrace++
-        case '}': nbrace--
-        }
+	for _, r := range s {
+		switch r {
+		case '{':
+			nbrace++
+		case '}':
+			nbrace--
+		}
 
-        // if inside a word:
-        if !unicode.IsSpace(r) || nbrace > 0 {
-            word = word + string(r)
+		// if inside a word:
+		if !unicode.IsSpace(r) || nbrace > 0 {
+			word = word + string(r)
 
-        // if outside a word
-        } else if unicode.IsSpace(r) {
-            // if we have a word to add, we do
-            appendWord()
-            // add the space to the list of words
-            words = append(words, string(r))
-        }
-    }
-    appendWord()
+			// if outside a word
+		} else if unicode.IsSpace(r) {
+			// if we have a word to add, we do
+			appendWord()
+			// add the space to the list of words
+			words = append(words, string(r))
+		}
+	}
+	appendWord()
 
-    return strings.Join(words, "")
+	return strings.Join(words, "")
 }
 
 // splitWords returns an array of strings, where each entry is either a
-// sequence of non-whitespace chars, or a sequence of whitepace chars. s ==
-// strings.Join(return, "")
+// sequence of non-whitespace chars, or a sequence of whitespace chars. s ==
+// strings.Join(return, "").
 func splitWords(s string) []string {
 	words := make([]string, 0)
 	word := ""
@@ -217,13 +228,13 @@ func splitWords(s string) []string {
 	return words
 }
 
-// ContainsNoBraces returns true if the tree contains no {}-deliminated substrings
+// ContainsNoBraces returns true if the tree contains no {}-delimitated substrings.
 func (bn *BraceNode) ContainsNoBraces() bool {
 	return len(bn.Children) == 1 && bn.Children[0].IsLeaf()
 }
 
-// FlattenToMinBraces tries to smartly {}-deliminate the smallest regions in
-// the text that correspond to things that need {}-delimination: strange-case
+// FlattenToMinBraces tries to smartly {}-delimitated the smallest regions in
+// the text that correspond to things that need {}-delimitation: strange-case
 // (mRNA) and quotes (").  This will *only* change strings if it looks like the
 // user didn't put any thought into it: specifically, only if the entire string
 // is {] or none of the string is {}.
@@ -254,9 +265,9 @@ func (bn *BraceNode) FlattenToMinBraces() string {
 	}
 }
 
-// split s on occurances of sep that are not contained in a { } block. If whitespace is
-// true, the it requires that the string be surrounded by whitespace (or the string
-// boundaries)
+// splitOnTopLevelString splits s on occurrences of sep that are not contained in a { } block. 
+// If whitespace is true, then it requires that the string be surrounded by whitespace (or the 
+// string boundaries).
 func splitOnTopLevelString(s, sep string, whitespace bool) []string {
 	nbraces := 0
 	lastend := 0
@@ -297,8 +308,8 @@ func splitOnTopLevelString(s, sep string, whitespace bool) []string {
 	return split
 }
 
-// splitOnTopLevel splits s on whitespace separated words, but treats {}-deliminated substrings
-// as a unit
+// splitOnTopLevel splits s on whitespace separated words, but treats {}-delimitated substrings
+// as a unit.
 func splitOnTopLevel(s string) []string {
 	nbraces := 0
 	word := ""
@@ -330,7 +341,7 @@ func splitOnTopLevel(s string) []string {
 }
 
 // IsStrangeCase returns true iff s has a capital letter someplace other than
-// the first position and not preceeded by a - (so Whole-Genome is not in
+// the first position and not preceded by a - (so Whole-Genome is not in
 // strange case. We also ignore punctuation at the start, so "(Whole-Genome" is
 // also not in strange case. mRNA is.
 func IsStrangeCase(s string) bool {
@@ -360,26 +371,27 @@ func HasQuote(w string) bool {
 	return false
 }
 
+// AllSpace returns true iff the brace tree node is all whitespace.
 func (bn *BraceNode) AllSpace() bool {
-    if !bn.IsLeaf() { 
-        return false
-    }
-    for _, r := range bn.Leaf {
-        if !unicode.IsSpace(r) {
-            return false
-        }
-    }
-    return true
+	if !bn.IsLeaf() {
+		return false
+	}
+	for _, r := range bn.Leaf {
+		if !unicode.IsSpace(r) {
+			return false
+		}
+	}
+	return true
 }
 
+// EndWithSpace returns true iff the leaf node ends with a space.
 func (bn *BraceNode) EndWithSpace() bool {
-    if !bn.IsLeaf() { 
-        return false
-    }
-    inspace := false
-    for _, r := range bn.Leaf {
-        inspace = unicode.IsSpace(r)
-    }
-    return inspace;
+	if !bn.IsLeaf() {
+		return false
+	}
+	inspace := false
+	for _, r := range bn.Leaf {
+		inspace = unicode.IsSpace(r)
+	}
+	return inspace
 }
-

@@ -1,10 +1,10 @@
-// (c) 2018 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
+// (c) 2018-2022 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
 package main
 
 import (
-	"github.com/Kingsford-Group/biblint/bib"
 	"flag"
 	"fmt"
+	"github.com/Kingsford-Group/biblint/bib"
 	"log"
 	"os"
 	"sort"
@@ -43,7 +43,7 @@ func registerSubcommand(name, desc string, do subcommandFunc) *subcommand {
 	return c
 }
 
-// printSubcommandDesc is used by the help system to print out the registered subcommands
+// printSubcommandDesc is used by the help system to print out the registered subcommands.
 func printSubcommandDesc() {
 	cmds := make([]string, len(subcommands))
 	i := 0
@@ -58,7 +58,7 @@ func printSubcommandDesc() {
 	}
 }
 
-// startSubcommand parses the flags and prints the banner
+// startSubcommand parses the flags and prints the banner.
 func startSubcommand(c *subcommand) bool {
 	c.flags.Parse(os.Args[2:])
 	if !c.flags.Parsed() {
@@ -72,7 +72,7 @@ func startSubcommand(c *subcommand) bool {
 	return true
 }
 
-// parseBibFromArgs reads the first argument as a bib file and returns the database
+// parseBibFromArgs reads the first argument as a bib file and returns the database.
 func parseBibFromArgs(c *subcommand) (*bib.Database, bool) {
 	if c.flags.NArg() < 1 {
 		fmt.Println("error: missing filename in fmt")
@@ -95,7 +95,7 @@ func parseBibFromArgs(c *subcommand) (*bib.Database, bool) {
 
 }
 
-// doFmt reads a bibtex file and formats it using a "standard" format.
+// doClean reads a bibtex file and formats it using a "standard" format.
 func doClean(c *subcommand) bool {
 	sortby := c.flags.String("sort", "year", "sorts the entry by `field`")
 	reverse := c.flags.Bool("reverse", true, "reverse the sort order")
@@ -119,14 +119,14 @@ func doClean(c *subcommand) bool {
 	// clean it up
 	db.NormalizeWhitespace()
 	db.RemoveWholeFieldBraces()
-    db.CanonicalBrace()
-    db.ConvertTitlesToMinBraces()
+	db.CanonicalBrace()
+	db.ConvertTitlesToMinBraces()
 	db.ConvertIntStringsToInt()
 	db.ReplaceSymbols()
 	db.ReplaceAbbrMonths()
 	db.RemoveNonBlessedFields(blessedArr)
 	db.RemoveEmptyFields()
-    db.ReplaceAuthorEtAl()
+	db.ReplaceAuthorEtAl()
 	db.NormalizeAuthors()
 	db.RemovePeriodFromTitles()
 	db.FixHyphensInPages()
@@ -140,13 +140,13 @@ func doClean(c *subcommand) bool {
 
 	// write it out
 	db.WriteDatabase(os.Stdout)
-    if !quiet {
-        log.Printf("Wrote %d publications.", len(db.Pubs))
-    }
+	if !quiet {
+		log.Printf("Wrote %d publications.", len(db.Pubs))
+	}
 	return true
 }
 
-// doCheck run the check command
+// doCheck runs the check command.
 func doCheck(c *subcommand) bool {
 	if !startSubcommand(c) {
 		return false
@@ -176,6 +176,7 @@ func doCheck(c *subcommand) bool {
 	return true
 }
 
+// doDups runs the dups command, identifying and printing possible duplicates.
 func doDups(c *subcommand) bool {
 	if !startSubcommand(c) {
 		return false
@@ -216,7 +217,7 @@ func main() {
 	log.SetPrefix("biblint: ")
 	log.SetFlags(0)
 
-    registerAllSubcommands()
+	registerAllSubcommands()
 
 	// if no command listed, report error
 	if len(os.Args) == 1 {

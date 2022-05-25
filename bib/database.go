@@ -1,4 +1,4 @@
-// (c) 2018 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
+// (c) 2018-2022 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
 package bib
 
 import (
@@ -24,21 +24,21 @@ const (
 	SymbolType
 )
 
-// Value is the value of an item in an entry
+// Value is the value of an item in an entry.
 type Value struct {
 	T FieldType
 	S string
 	I int
 }
 
-// BibTeXError holds an error found in a bibtex file
+// BibTeXError holds an error found in a bibtex file.
 type BibTeXError struct {
 	BadEntry *Entry
 	Tag      string
 	Msg      string
 }
 
-// addError adds an error to the list of reported errors
+// addError adds an error to the list of reported errors.
 func (db *Database) addError(e *Entry, tag string, msg string) {
 	db.Errors = append(db.Errors, &BibTeXError{
 		BadEntry: e,
@@ -84,7 +84,7 @@ func (db *Database) PrintErrors(w io.Writer) {
 
 }
 
-// Expands symbol definitions to their defined values; if an expansion expands
+// SymbolValue expands symbol definitions to their defined values; if an expansion expands
 // to a symbol itself, then that symbol will be expanded and so on, up to
 // `depth` recursions.  If an undefined symbol is found, we return the
 // unexpanded symbol (at that point). If we exceed the depth, we return where
@@ -110,7 +110,7 @@ func (db *Database) SymbolValue(symb *Value, depth int) *Value {
 	return symb
 }
 
-// returns true if v1 < v2
+// Less returns true iff v1 < v2.
 func (db *Database) Less(v1 *Value, v2 *Value) bool {
 
 	// expand the symbols, if appropriate (nop otherwise)
@@ -141,7 +141,7 @@ func (db *Database) Less(v1 *Value, v2 *Value) bool {
 	return vs1 < vs2
 }
 
-// Equals returns true if v1 == v2
+// Equals returns true if v1 == v2.
 func (v1 *Value) Equals(v2 *Value) bool {
 	if v1.T == v2.T {
 		switch v1.T {
@@ -154,7 +154,7 @@ func (v1 *Value) Equals(v2 *Value) bool {
 	return false
 }
 
-// Author represents an Author and the various named parts
+// Author represents an Author and the various named parts.
 type Author struct {
 	Others bool
 	First  string
@@ -163,12 +163,12 @@ type Author struct {
 	Jr     string
 }
 
-// Returns true iff an author structure is exactly equal to another
+// Equals returns true iff an author structure is exactly equal to another.
 func (a *Author) Equals(b *Author) bool {
 	return *a == *b
 }
 
-// Entry represents some publication or entry in the database
+// Entry represents some publication or entry in the database.
 type Entry struct {
 	Kind        EntryKind
 	EntryString string
@@ -178,9 +178,9 @@ type Entry struct {
 	LineNo      int
 }
 
-// IsSubset returns true if this entnry is a subset of the given one. An e1 is
+// IsSubset returns true if this entry is a subset of the given one. An e1 is
 // a subset of e2 if they (a) have the same type, and (b) every field in e1
-// appears in e2 with the exact same value
+// appears in e2 with the exact same value.
 func (e1 *Entry) IsSubset(e2 *Entry) bool {
 	if e1.Kind != e2.Kind || strings.ToLower(e1.EntryString) != strings.ToLower(e2.EntryString) {
 		return false
@@ -196,7 +196,7 @@ func (e1 *Entry) IsSubset(e2 *Entry) bool {
 
 // Equals returns true if the two entries are equal. Entries e1 and e2 are
 // equal if they are the same Kind, have the exact same set of tags, and have
-// exactly the same values for each tag. Note that the entrie's KEY does not
+// exactly the same values for each tag. Note that the entry's KEY does not
 // play a role in Equality testing, nor does the parsed author list -- two
 // entries would be unequal if they had the same author list encoded
 // differently.
@@ -204,14 +204,14 @@ func (e1 *Entry) Equals(e2 *Entry) bool {
 	return e1.IsSubset(e2) && e2.IsSubset(e1)
 }
 
-// newEntry creates a new empty entry
+// newEntry creates a new empty entry.
 func newEntry() *Entry {
 	return &Entry{
 		Fields: make(map[string]*Value),
 	}
 }
 
-// Tags() returns the list of tag names of the entry's fields
+// Tags returns the list of tag names of the entry's fields.
 func (e *Entry) Tags() []string {
 	tags := make([]string, len(e.Fields))
 	i := 0
@@ -223,7 +223,7 @@ func (e *Entry) Tags() []string {
 	return tags
 }
 
-// Database is a collection of entries plus symbols and preambles
+// Database is a collection of entries plus symbols and preambles.
 type Database struct {
 	Pubs     []*Entry
 	Symbols  map[string]*Value
@@ -319,7 +319,7 @@ func (db *Database) NormalizeAuthors() {
 }
 
 // TransformEachField is a helper function that applies the parameter trans
-// to every tag/value pair in the database
+// to every tag/value pair in the database.
 func (db *Database) TransformEachField(trans func(string, *Value) *Value) {
 	for _, e := range db.Pubs {
 		for tag, value := range e.Fields {
@@ -328,7 +328,7 @@ func (db *Database) TransformEachField(trans func(string, *Value) *Value) {
 	}
 }
 
-// TransformField applies the given transformation to each field named "tag"
+// TransformField applies the given transformation to each field named "tag".
 func (db *Database) TransformField(tag string, trans func(string, *Value) *Value) {
 	for _, e := range db.Pubs {
 		if value, ok := e.Fields[tag]; ok {
@@ -339,7 +339,7 @@ func (db *Database) TransformField(tag string, trans func(string, *Value) *Value
 
 // ConvertIntStringsToInt looks for values that are marked as strings but that
 // are really integers and converts them to ints. This happens when a bibtex
-// file has, e.g., volume = {9} instead of volume = 9
+// file has, e.g., volume = {9} instead of volume = 9.
 func (db *Database) ConvertIntStringsToInt() {
 	db.TransformEachField(
 		func(tag string, value *Value) *Value {
@@ -353,7 +353,7 @@ func (db *Database) ConvertIntStringsToInt() {
 		})
 }
 
-// NoramalizeWhitespace replaces errant whitespace with " " characters
+// NoramalizeWhitespace replaces errant whitespace with " " characters.
 func (db *Database) NormalizeWhitespace() {
 	spaces := regexp.MustCompile(" +")
 	db.TransformEachField(
@@ -404,9 +404,9 @@ func (db *Database) ReplaceSymbols() {
 		})
 }
 
-// Find month fields that contain abbreviated text or numbers
+// Find month fields that contain abbreviated text or numbers.
 // Note that we don't need to handle fields that list the full month name since
-// those are handled by the pre-defined symbols
+// those are handled by the pre-defined symbols.
 func (db *Database) ReplaceAbbrMonths() {
 	months := map[string]string{
 		"jan":  "jan",
@@ -480,7 +480,7 @@ func (db *Database) RemoveNonBlessedFields(additional []string) {
 	}
 }
 
-// RemoveEmptyField removes string fields whose value is the empty string
+// RemoveEmptyField removes string fields whose value is the empty string.
 func (db *Database) RemoveEmptyFields() {
 	for _, e := range db.Pubs {
 		for tag, value := range e.Fields {
@@ -495,42 +495,42 @@ func (db *Database) RemoveEmptyFields() {
 // correct "and others" inside of author fields.
 func (db *Database) ReplaceAuthorEtAl() {
 	etal := regexp.MustCompile(`\s[eE][tT]\s+[aA][lL]\.?$`)
-    db.TransformField("author", 
+	db.TransformField("author",
 		func(tag string, v *Value) *Value {
 			if v.T == StringType {
-                v.S = etal.ReplaceAllString(v.S, " and others")
-            }
-            return v
-        })
+				v.S = etal.ReplaceAllString(v.S, " and others")
+			}
+			return v
+		})
 }
 
 // BraceQuotes replaces any word foo"bar with {foo"bar"}. the most common
 // situation is foo\"{e}bar. Note that word here is defined as a whitespace
 // separated string of chars. We do *not* take into account the {} structure
-// so: {hi\"{e} there} because {{hi\"{e}} there}
+// so: {hi\"{e} there} because {{hi\"{e}} there}.
 func (db *Database) CanonicalBrace() {
-    db.TransformEachField(
-        func(tag string, v *Value) *Value {
-            if v.T == StringType && tag != "author" {
-                v.S = canonicalBrace(v.S)
-            }
-            return v
-        })
+	db.TransformEachField(
+		func(tag string, v *Value) *Value {
+			if v.T == StringType && tag != "author" {
+				v.S = canonicalBrace(v.S)
+			}
+			return v
+		})
 }
 
 // RemoveWholeFieldBraces removes the braces from fields that look like:
-// {{foo bar baz}}
+// {{foo bar baz}}.
 func (db *Database) RemoveWholeFieldBraces() {
 	db.TransformEachField(
 		func(tag string, v *Value) *Value {
 			// we only transform non-author, string-type fields
 			if v.T == StringType && tag != "author" {
 				if bn, size := ParseBraceTree(v.S); size == len(v.S) {
-                    if bn.IsEntireStringBraced() {
-                        v.S = bn.Children[0].Flatten()
-                    } else {
-					    v.S = bn.Flatten()
-                    }
+					if bn.IsEntireStringBraced() {
+						v.S = bn.Children[0].Flatten()
+					} else {
+						v.S = bn.Flatten()
+					}
 				}
 			}
 			return v
@@ -538,7 +538,6 @@ func (db *Database) RemoveWholeFieldBraces() {
 }
 
 // ConvertTitlesToMinBraces makes sure that all strange-case words are in {}
-// {{foo bar baz}}
 func (db *Database) ConvertTitlesToMinBraces() {
 	db.TransformEachField(
 		func(tag string, v *Value) *Value {
@@ -553,7 +552,7 @@ func (db *Database) ConvertTitlesToMinBraces() {
 }
 
 // Removes unneeded "." from the end of the titles. The . must be the last character
-// and it must be preceeded by a lowercase letter
+// and it must be preceded by a lowercase letter.
 func (db *Database) RemovePeriodFromTitles() {
 	pend := regexp.MustCompile(`([[:lower:]])\.$`)
 	db.TransformField("title",
@@ -566,7 +565,7 @@ func (db *Database) RemovePeriodFromTitles() {
 }
 
 // FixHyphensInPages will replace pages fields that look like NUMBER - NUMBER or
-// NUMBER -- NUMBER with NUMBER--NUMBER
+// NUMBER -- NUMBER with NUMBER--NUMBER.
 func (db *Database) FixHyphensInPages() {
 	dash := regexp.MustCompile(`([[:digit:]])\s*-{1,2}\s*([[:digit:]])`)
 	db.TransformField("pages",
@@ -581,8 +580,8 @@ func (db *Database) FixHyphensInPages() {
 		})
 }
 
-// for page fields that match aaaa--bb, and where aaaa and bb are integers,
-// replace with aaaa-aabb
+// FixTruncatedPageNumbers performs the transformation: for page fields that match aaaa--bb, and 
+// where aaaa and bb are integers, replace with aaaa-aabb.
 func (db *Database) FixTruncatedPageNumbers() {
 	pages := regexp.MustCompile(`^(\d+)--(\d+)$`)
 	db.TransformField("pages",
@@ -600,7 +599,7 @@ func (db *Database) FixTruncatedPageNumbers() {
 }
 
 // toGoodTitle converts a word to title case, meaning the first letter is capitalized
-// unless the word is a "small" word
+// unless the word is a "small" word.
 func toGoodTitle(w string) string {
 
 	tlw := make(map[string]bool)
@@ -679,7 +678,7 @@ func (db *Database) RemoveExactDups() {
 }
 
 // removeDeleted removes the entries marked Kind == Deleted. There must be exactly
-// ndel of them (which is passed in for efficiency)
+// ndel of them (which is passed in for efficiency).
 func (db *Database) removeDeleted(ndel int) {
 	newPubs := make([]*Entry, len(db.Pubs)-ndel)
 	i := 0
@@ -692,9 +691,8 @@ func (db *Database) removeDeleted(ndel int) {
 	db.Pubs = newPubs
 }
 
-// RemoveContainedEntries tries to find entries that are contained in others
+// RemoveContainedEntries tries to find entries that are contained in others.
 func (db *Database) RemoveContainedEntries() {
-
 	// bin the entries by title
 	byTitle := make(map[string][]*Entry)
 	for _, e := range db.Pubs {
@@ -731,7 +729,7 @@ func (db *Database) RemoveContainedEntries() {
 }
 
 // CheckField is a helper function that checks the `tag` field in entries
-// using the given `check` function
+// using the given `check` function.
 func (db *Database) CheckField(tag string, check func(*Value) string) {
 	for _, e := range db.Pubs {
 		if v, ok := e.Fields[tag]; ok {
@@ -742,7 +740,7 @@ func (db *Database) CheckField(tag string, check func(*Value) string) {
 	}
 }
 
-// isAllCaps returns true if every letter in the string is a uppercase
+// isAllCaps returns true iff every letter in the string is uppercase.
 func isAllCaps(s string) bool {
 	for _, r := range s {
 		if unicode.IsLetter(r) && !unicode.IsUpper(r) {
@@ -752,7 +750,7 @@ func isAllCaps(s string) bool {
 	return true
 }
 
-// isAllLower returns true iff every letter in the string is a lowercase letter
+// isAllLower returns true iff every letter in the string is a lowercase letter.
 func isAllLower(s string) bool {
 	for _, r := range s {
 		if unicode.IsLetter(r) && !unicode.IsLower(r) {
@@ -764,7 +762,7 @@ func isAllLower(s string) bool {
 
 // CheckAuthorLast checks for authors where the last name parsed like "J H" or "JH" or "J.H."
 // or if the last name is all lowercase. Must have called db.NormalizeAuthors(), otherwise
-// this is a no-op
+// this is a no-op.
 func (db *Database) CheckAuthorLast() {
 	for _, e := range db.Pubs {
 		if e.AuthorList != nil {
@@ -785,7 +783,7 @@ func (db *Database) CheckAuthorLast() {
 
 }
 
-// CheckYearsAreInt adds errors if a year is not an integer
+// CheckYearsAreInt adds errors if a year is not an integer.
 func (db *Database) CheckYearsAreInt() {
 	db.CheckField("year",
 		func(v *Value) string {
@@ -797,7 +795,7 @@ func (db *Database) CheckYearsAreInt() {
 		})
 }
 
-// CheckEtAl reports the error of using "et al" within a author list
+// CheckEtAl reports the error of using "et al" within a author list.
 func (db *Database) CheckEtAl() {
 	etal := regexp.MustCompile(` [eE][tT]\s+[aA][lL]`)
 	db.CheckField("author",
@@ -810,7 +808,7 @@ func (db *Database) CheckEtAl() {
 		})
 }
 
-// CheckAllFields is a helper that runs the given check function for each field
+// CheckAllFields is a helper that runs the given check function for each field.
 func (db *Database) CheckAllFields(check func(string, *Value) string) {
 	for _, e := range db.Pubs {
 		for tag, value := range e.Fields {
@@ -821,7 +819,7 @@ func (db *Database) CheckAllFields(check func(string, *Value) string) {
 	}
 }
 
-// CheckASCII reports errors where non-ASCII are used in any field
+// CheckASCII reports errors where non-ASCII are used in any field.
 func (db *Database) CheckASCII() {
 	db.CheckAllFields(
 		func(tag string, v *Value) string {
@@ -836,7 +834,7 @@ func (db *Database) CheckASCII() {
 		})
 }
 
-// CheckUndefinedSymbols reports symbols that are not defined
+// CheckUndefinedSymbols reports symbols that are not defined.
 func (db *Database) CheckUndefinedSymbols() {
 	db.CheckAllFields(
 		func(tag string, v *Value) string {
@@ -854,7 +852,7 @@ func (db *Database) CheckUndefinedSymbols() {
 		})
 }
 
-// CheckLoneHyphenInTitle reports errors where - is used when --- is probably meant
+// CheckLoneHyphenInTitle reports errors where - is used when --- is probably meant.
 func (db *Database) CheckLoneHyphenInTitle() {
 	hyphen := regexp.MustCompile(`\s-\s`)
 	db.CheckField("title",
@@ -866,7 +864,7 @@ func (db *Database) CheckLoneHyphenInTitle() {
 		})
 }
 
-// CheckPageRanges reports errors where a pages looks like X--Y where X > Y
+// CheckPageRanges reports errors where a pages looks like X--Y where X > Y.
 func (db *Database) CheckPageRanges() {
 	pages := regexp.MustCompile(`^(\d+)--(\d+)$`)
 	db.CheckField("pages",
@@ -887,7 +885,7 @@ func (db *Database) CheckPageRanges() {
 		})
 }
 
-// CheckDuplicateKeys finds entries with duplicate keys
+// CheckDuplicateKeys finds entries with duplicate keys.
 func (db *Database) CheckDuplicateKeys() {
 	keys := make(map[string]bool)
 	dups := make(map[string]*Entry)
@@ -904,7 +902,7 @@ func (db *Database) CheckDuplicateKeys() {
 	}
 }
 
-// CheckRequiredFields reports any missing required fields
+// CheckRequiredFields reports any missing required fields.
 func (db *Database) CheckRequiredFields() {
 	for _, e := range db.Pubs {
 		if _, ok := required[e.Kind]; ok {
@@ -926,7 +924,7 @@ func (db *Database) CheckRequiredFields() {
 }
 
 // CheckUnmatchedDollarSigns checks whether a string has an odd number of
-// unescaped dollar signs
+// unescaped dollar signs.
 func (db *Database) CheckUnmatchedDollarSigns() {
 	db.CheckAllFields(
 		func(tag string, v *Value) string {
@@ -954,7 +952,7 @@ func (db *Database) CheckUnmatchedDollarSigns() {
 }
 
 // CheckRedudantSymbols finds groups of @string definitions that define the
-// same string
+// same string.
 func (db *Database) CheckRedundantSymbols() {
 	x := make(map[string][]string)
 
@@ -976,10 +974,10 @@ func (db *Database) CheckRedundantSymbols() {
 }
 
 /*=====================================================================================
- * Duplicate Entrie Checking
+ * Duplicate Entry Checking
  *====================================================================================*/
 
-// removeNonLetters removes non-letters from a string (also keeping whitespace)
+// removeNonLetters removes non-letters from a string (also keeping whitespace).
 func removeNonLetters(s string) string {
 	w := ""
 	for _, r := range s {
@@ -990,7 +988,7 @@ func removeNonLetters(s string) string {
 	return w
 }
 
-// titleHash returns a simplified title useful for grouping pubs
+// titleHash returns a simplified title useful for grouping pubs.
 func titleHash(e *Entry) string {
 	tlw := make(map[string]bool)
 	for _, w := range titleLowerWords {
@@ -1014,6 +1012,7 @@ func titleHash(e *Entry) string {
 	return ""
 }
 
+// FindDupsByTitle returns sets of entries with the same title.
 func (db *Database) FindDupsByTitle() map[string][]*Entry {
 	H := make(map[string][]*Entry)
 	for _, e := range db.Pubs {
@@ -1026,6 +1025,8 @@ func (db *Database) FindDupsByTitle() map[string][]*Entry {
 	return H
 }
 
+// RemoveDupsByTitle removes entries found by FindDupsByTitle if they are equal or one
+// is a subset of the other.
 func (db *Database) RemoveDupsByTitle() {
 	ndel := 0
 	for hash, list := range db.FindDupsByTitle() {

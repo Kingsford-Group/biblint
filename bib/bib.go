@@ -1,9 +1,9 @@
-// (c) 2018 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
+// (c) 2018-2022 by Carl Kingsford (carlk@cs.cmu.edu). See LICENSE.txt.
 package bib
 
 import (
-	"github.com/Kingsford-Group/biblint/lexer"
 	"fmt"
+	"github.com/Kingsford-Group/biblint/lexer"
 	"io"
 	"sort"
 	"strconv"
@@ -16,12 +16,12 @@ import (
 // BibTeX database structure
 //==================================================================
 
-// EntryKind are the known types of BibTeX entries
+// EntryKind are the known types of BibTeX entries.
 type EntryKind string
 
 const (
 	Deleted       EntryKind = "**DELETED**"
-    Comment                 = "comment"
+	Comment                 = "comment"
 	Other                   = "other"
 	String                  = "string"
 	Preamble                = "preamble"
@@ -40,15 +40,15 @@ const (
 	Unpublished             = "unpublished"
 )
 
-// identToKind maps a (lowercase) string into the EntryKind type
+// identToKind maps a (lowercase) string into the EntryKind type.
 var identToKind = map[string]EntryKind{
 	"other":         Other,
-    "comment":       Comment,
+	"comment":       Comment,
 	"string":        String,
 	"preamble":      Preamble,
 	"article":       Article,
 	"book":          Book,
-    "booklet":       Booklet,
+	"booklet":       Booklet,
 	"inbook":        InBook,
 	"incollection":  InCollection,
 	"inproceedings": InProceedings,
@@ -61,7 +61,7 @@ var identToKind = map[string]EntryKind{
 	"unpublished":   Unpublished,
 }
 
-// required lists the required fields for each EntryKind type
+// required lists the required fields for each EntryKind type.
 var required = map[EntryKind][]string{
 	Other:         []string{},
 	String:        []string{},
@@ -82,7 +82,7 @@ var required = map[EntryKind][]string{
 }
 
 // optional lists the "optional" fields for each EntryKind. Optional fields are those
-// that are often used for the entry type but that are not "required"
+// that are often used for the entry type but that are not "required".
 var optional = map[EntryKind][]string{
 	Other:         []string{},
 	String:        []string{},
@@ -104,7 +104,7 @@ var optional = map[EntryKind][]string{
 
 // blessed lists fields that are neither required nor "optional" but that are
 // commonly used in bibtex entries. We treat "key" and "note" as blessed
-// instead of "optional", since those fields are "optional" for any entry type (except unpublished)
+// instead of "optional", since those fields are "optional" for any entry type (except unpublished).
 var blessed = []string{"key", "note", "url", "doi", "pmc", "pmid", "crossref", "keywords", "issn", "isbn"}
 
 // predefinedSymbols lists the predefined symbols
@@ -123,7 +123,7 @@ var predefinedSymbols = map[string]string{
 	"dec": "December",
 }
 
-// toEntryKind coverts a string to an EntryKind
+// toEntryKind coverts a string to an EntryKind.
 func toEntryKind(s string) EntryKind {
 	if k, ok := identToKind[strings.ToLower(s)]; ok {
 		return k
@@ -136,7 +136,7 @@ func toEntryKind(s string) EntryKind {
 // Parser
 //==================================================================
 
-// ParserError holds a parser error
+// ParserError holds a parser error.
 type ParserError struct {
 	err error
 	tok *lexer.Token
@@ -190,7 +190,7 @@ func NewParser(f io.Reader) *Parser {
 
 // peekError records a syntax error detected by a peek operation:
 // This is called when we expect expected but got something else in
-// the peek location
+// the peek location.
 func (p *Parser) peekError(expected lexer.TokenType) {
 	p.addError(fmt.Sprintf("expected %s, got %s instead", expected, p.peekToken.Type))
 }
@@ -232,7 +232,7 @@ func (p *Parser) peekTokenIs(t lexer.TokenType) bool {
 
 // expectPeek asserts that the peek token is of the given type. If it
 // is, then we advance so that the peek becomes the current; otherwise
-// we record a syntax error
+// we record a syntax error.
 func (p *Parser) expectPeek(t lexer.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.advanceTokens()
@@ -243,7 +243,7 @@ func (p *Parser) expectPeek(t lexer.TokenType) bool {
 	}
 }
 
-// reads a tag/value pair in an entry. We expect a sequence of tokens that look like
+// readTagValue reads a tag/value pair in an entry. We expect a sequence of tokens that look like
 //          IDENT = [STRING|IDENT]
 // where the first IDENT is in the cur position. Returns true if we read a k/v
 // pair successfully, in which case it will have been added to the given Entry.
@@ -278,60 +278,60 @@ func (p *Parser) readTagValue(entry *Entry) bool {
 		return false
 	}
 
-    if _, ok := entry.Fields[tag]; ok {
-       p.addError(fmt.Sprintf("tag %s occurs more than once in entry %s", tag, entry.Key))
-    } else {
-        // save the data into the entry
-        entry.Fields[tag] = v
-    }
+	if _, ok := entry.Fields[tag]; ok {
+		p.addError(fmt.Sprintf("tag %s occurs more than once in entry %s", tag, entry.Key))
+	} else {
+		// save the data into the entry
+		entry.Fields[tag] = v
+	}
 	return true
 }
 
 // parsePreamble handles parsing @preamble{text text text} entries.
 func (p *Parser) parsePreamble() *Entry {
 
-    // preamble { STRING }
+	// preamble { STRING }
 
 	if !p.expectPeek(lexer.IDENT) {
 		return nil
 	}
 
-    // {
+	// {
 	p.bracesAsString = true // need this here so that this peek reads a string after it
-    defer func() {p.bracesAsString = false}()
+	defer func() { p.bracesAsString = false }()
 
 	if !p.expectPeek(lexer.LBRACE) {
 		return nil
 	}
 
-    // read the string either as ""  or {}
+	// read the string either as ""  or {}
 	entry := newEntry()
 	entry.Kind = Preamble
 	entry.EntryString = p.curToken.Literal
 
-    // STRING
+	// STRING
 	if !p.expectPeek(lexer.STRING) {
 		return nil
 	}
 	entry.Key = p.curToken.Literal
 	p.bracesAsString = false
 
-    // }
-    if !p.expectPeek(lexer.RBRACE) {
-        return nil
-    }
+	// }
+	if !p.expectPeek(lexer.RBRACE) {
+		return nil
+	}
 	return entry
 }
 
-// should be called when peekToken is "comment"
+// parseComment should be called when peekToken is "comment".
 func (p *Parser) parseComment() {
-    p.lex.SkipToNewLine()
+	p.lex.SkipToNewLine()
 }
 
-// parseEntry reads an @type{tag=value, tag=value, ...} entry It will handle
-// @string and @preamble correctly Note that for @string, this function
+// parseEntry reads an @type{tag=value, tag=value, ...} entry. It will handle
+// @string and @preamble correctly. Note that for @string, this function
 // supports the non-BibTeX syntax of allowing several symbols to be defined in
-// one @string. It will return the symbols as tag/value pairs in Fields
+// one @string. It will return the symbols as tag/value pairs in Fields.
 func (p *Parser) parseEntry() *Entry {
 
 	// must handle @preamble specially b/c (a) it has no tag = value pairs and (b) it
@@ -340,11 +340,11 @@ func (p *Parser) parseEntry() *Entry {
 		return p.parsePreamble()
 	}
 
-    // a @comment goes until the end of the line
-    if p.peekTokenIs(lexer.IDENT) && toEntryKind(p.peekToken.Literal) == Comment {
-        p.parseComment()
-        return nil
-    }
+	// a @comment goes until the end of the line
+	if p.peekTokenIs(lexer.IDENT) && toEntryKind(p.peekToken.Literal) == Comment {
+		p.parseComment()
+		return nil
+	}
 
 	// @ IDENT { IDENT , [IDENT = [STRING|IDENT] COMMA]* }
 	entry := newEntry()
@@ -395,10 +395,10 @@ func (p *Parser) parseEntry() *Entry {
 
 		// if the entry ends with a COMMA, eat it up
 
-        // NOTE: this reads incorrectly formated bibtex with missing commas
-        // between k/v pairs. Those commas are "unnecessary" but required ---
-        // so we will parse some badly formated bibtex, but get the "right"
-        // answer anyway
+		// NOTE: this reads incorrectly formated bibtex with missing commas
+		// between k/v pairs. Those commas are "unnecessary" but required ---
+		// so we will parse some badly formated bibtex, but get the "right"
+		// answer anyway
 
 		if p.peekTokenIs(lexer.COMMA) {
 			p.advanceTokens()
@@ -409,7 +409,7 @@ func (p *Parser) parseEntry() *Entry {
 }
 
 // ParseBibTeX reads the bibtex given to the parser when it was created and
-// returns a database of entries
+// returns a database of entries.
 func (p *Parser) ParseBibTeX() *Database {
 
 	p.bracesAsString = false
@@ -446,12 +446,12 @@ func (p *Parser) ParseBibTeX() *Database {
 	return database
 }
 
-// NErrors() returns the number of errors encountered while parsing
+// NErrors() returns the number of errors encountered while parsing.
 func (p *Parser) NErrors() int {
 	return len(p.errors)
 }
 
-// PrintErrors writes the stored error messages to the given Writer
+// PrintErrors writes the stored error messages to the given Writer.
 func (p *Parser) PrintErrors(w io.Writer) {
 	for _, e := range p.errors {
 		line, col := e.tok.Position()
@@ -475,9 +475,9 @@ func writeTagValue(w io.Writer, tag string, value *Value) {
 }
 
 // writeEntry writes an entire entry to w. If the kind of the entry is
-// String or Preamble, the formating will *not* be correct. The fields
+// String or Preamble, the formatting will *not* be correct. The fields
 // will be ordered by first required, then optional, then blessed, then
-// everything else
+// everything else.
 func writeEntry(w io.Writer, e *Entry) {
 	fmt.Fprintf(w, "\n@%s{%s,\n",
 		strings.ToLower(e.EntryString),
@@ -510,10 +510,10 @@ func writeEntry(w io.Writer, e *Entry) {
 	// print the blessed fields
 	for _, tag := range blessed {
 		if v, ok := e.Fields[tag]; ok {
-            if _, ok := printed[tag]; !ok {
-		    	writeTagValue(w, tag, v)
-			    printed[tag] = true
-            }
+			if _, ok := printed[tag]; !ok {
+				writeTagValue(w, tag, v)
+				printed[tag] = true
+			}
 		}
 	}
 
@@ -527,7 +527,7 @@ func writeEntry(w io.Writer, e *Entry) {
 	fmt.Fprintf(w, "}\n")
 }
 
-// writeValue formats and writes the value to the given field
+// writeValue formats and writes the value to the given field.
 func (value *Value) write(w io.Writer) {
 	switch value.T {
 	case StringType:
@@ -541,19 +541,19 @@ func (value *Value) write(w io.Writer) {
 	}
 }
 
-// writeSymbol writes an @string entry for the given k/v pair
+// writeSymbol writes an @string entry for the given k/v pair.
 func writeSymbol(w io.Writer, k string, v *Value) {
 	fmt.Fprintf(w, "@string{ %-10s = ", k)
 	v.write(w)
 	fmt.Fprintf(w, " }\n")
 }
 
-// writePreamble writes an @preamble entnry for the given string
+// writePreamble writes an @preamble entry for the given string.
 func writePreamble(w io.Writer, k string) {
 	fmt.Fprintf(w, "@preamble{\"%s\"}\n", k)
 }
 
-// writeDatabase writes the entire database to w
+// writeDatabase writes the entire database to w.
 func (db *Database) WriteDatabase(w io.Writer) {
 	for _, v := range db.Preamble {
 		writePreamble(w, v)
@@ -582,7 +582,7 @@ func (db *Database) WriteDatabase(w io.Writer) {
  *======================================================================================*/
 
 // parseVon finds the von part of a last name. The last name should be provided
-// as a list of words
+// as a list of words.
 func parseVon(last []string) (string, string) {
 	if len(last) == 1 {
 		return "", last[0]
@@ -610,8 +610,8 @@ func parseVon(last []string) (string, string) {
 	return von, lastName
 }
 
-// Given a name (without commas), finds the first, von and last name parts
-// the jr part must be empty in this case
+// parseNameParts  finds the first, von and last name parts given a name (without commas).
+// The "jr" part must be empty in this case.
 func parseNameParts(name string) (string, string, string) {
 	s := splitOnTopLevel(name)
 
@@ -634,8 +634,8 @@ func parseNameParts(name string) (string, string, string) {
 	return first, von, last
 }
 
-// NormalizeName returns an Author object parsed from a name string
-// We try to follow BibTeX's (rediculous) rules for parsing names
+// NormalizeName returns an Author object parsed from a name string.
+// We try to follow BibTeX's (ridiculous) rules for parsing names.
 func NormalizeName(name string) *Author {
 	// if we're given an empty string
 	name = strings.TrimSpace(name)
@@ -675,7 +675,7 @@ func NormalizeName(name string) *Author {
 	return a
 }
 
-// surround a {} if it contains a top-level "
+// quoteName surrounds a {} if it contains a top-level "
 func quoteName(s string) string {
 	hastopquote := false
 	nbrace := 0
@@ -697,9 +697,9 @@ func quoteName(s string) string {
 	return s
 }
 
-// String() converts an author to a normalized name string.  We always use the
-// von Last, First or von Last, Jr, First formats depending onn whether Jr is
-// empty or not
+// String converts an author to a normalized name string.  We always use the
+// von Last, First or von Last, Jr, First formats depending on whether Jr is
+// empty or not.
 func (a *Author) String() string {
 	if a.Others {
 		return "others"

@@ -1,14 +1,20 @@
 
+## Installing from Source
+
+If you want to use `biblint`, take the following steps:
+
+1. Install Go (version 1.18 or newer) from [http://golang.org](http://golang.org)
+2. `go install github.com/Kingsford-Group/biblint/biblint@latest`
+3. The command will be installed according to `go install`'s rules (in `~/go/bin` if you don't set the `GOBIN` variable; otherwise wherever `GOBIN` points).
+
 ## Building from Source
 
-1. Install Go from http://golang.org
-2. clone this repo into `$GOHOME/src/github.com/Kingsford-Group`
-3. `cd biblint/biblint`
-4. `go build`
+If you want to hack on the source code, take the following steps:
 
-You can do step two via `go get github.com/Kingsford-Group/biblint/biblint`
-(need to list path to the biblint command, which is why `biblint` appears twice
-at the end)
+1. Install Go (version 1.18 or newer) from [http://golang.org](http://golang.org)
+2. clone this repo wherever you want
+3. `cd` into the `biblint/biblint` directory
+4. `go build`
 
 Currently, `biblint` has no external dependencies beyond Go and its standard library.
 

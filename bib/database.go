@@ -808,7 +808,13 @@ func (db *Database) CheckEtAl() {
 // CheckAllFields is a helper that runs the given check function for each field.
 func (db *Database) CheckAllFields(check func(string, *Value) string) {
 	for _, e := range db.Pubs {
-		for tag, value := range e.Fields {
+		fields := make([]string, 0)
+		for key := range e.Fields {
+			fields = append(fields, key)
+		}
+		sort.Strings(fields)
+		for _, tag := range fields {
+			value := e.Fields[tag]
 			if msg := check(tag, value); msg != "" {
 				db.addError(e, tag, msg)
 			}
@@ -898,6 +904,26 @@ func (db *Database) CheckPagesStartAtOne() {
 						if (start == 1) && (end > 1) {
 							return fmt.Sprintf("page range starts at 1: %d--%d", start, end)
 						}
+					}
+				}
+			}
+			return ""
+		})
+}
+
+// CheckWholeFieldBraces reports fields that are entirely enclosed in braces and include whitespace.
+// The requirement to include whitespace is to avoid flagging single-word fields like
+// {IEEE} which are often done for a reason. I.e. there is no other way to say {{arXiv}} if you want
+// to protect the casing (if your bibtex style title cases journal names). Well, I guess {{arXiv}{}}
+// would work, but that's worse that whole-field braces.
+func (db *Database) CheckWholeFieldBraces() {
+	whitespace := regexp.MustCompile(`\s`)
+	db.CheckAllFields(
+		func(tag string, v *Value) string {
+			if v.T == StringType {
+				if bn, size := ParseBraceTree(v.S); size == len(v.S) {
+					if bn.IsEntireStringBraced() && whitespace.MatchString(v.S) {
+						return fmt.Sprintf("field %q is entirely enclosed in extra braces", tag)
 					}
 				}
 			}

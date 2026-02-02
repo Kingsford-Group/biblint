@@ -3,13 +3,14 @@ package bib
 
 import (
 	"fmt"
-	"github.com/Kingsford-Group/biblint/lexer"
 	"io"
 	"sort"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/Kingsford-Group/biblint/lexer"
 )
 
 //==================================================================
@@ -21,23 +22,23 @@ type EntryKind string
 
 const (
 	Deleted       EntryKind = "**DELETED**"
-	Comment                 = "comment"
-	Other                   = "other"
-	String                  = "string"
-	Preamble                = "preamble"
-	Article                 = "article"
-	Book                    = "book"
-	Booklet                 = "booklet"
-	InBook                  = "inbook"
-	InCollection            = "incollection"
-	InProceedings           = "inproceedings"
-	Manual                  = "manual"
-	MastersThesis           = "mastersthesis"
-	Misc                    = "misc"
-	PhdThesis               = "phdthesis"
-	Proceedings             = "proceedings"
-	TechReport              = "techreport"
-	Unpublished             = "unpublished"
+	Comment       EntryKind = "comment"
+	Other         EntryKind = "other"
+	String        EntryKind = "string"
+	Preamble      EntryKind = "preamble"
+	Article       EntryKind = "article"
+	Book          EntryKind = "book"
+	Booklet       EntryKind = "booklet"
+	InBook        EntryKind = "inbook"
+	InCollection  EntryKind = "incollection"
+	InProceedings EntryKind = "inproceedings"
+	Manual        EntryKind = "manual"
+	MastersThesis EntryKind = "mastersthesis"
+	Misc          EntryKind = "misc"
+	PhdThesis     EntryKind = "phdthesis"
+	Proceedings   EntryKind = "proceedings"
+	TechReport    EntryKind = "techreport"
+	Unpublished   EntryKind = "unpublished"
 )
 
 // identToKind maps a (lowercase) string into the EntryKind type.
@@ -63,49 +64,53 @@ var identToKind = map[string]EntryKind{
 
 // required lists the required fields for each EntryKind type.
 var required = map[EntryKind][]string{
-	Other:         []string{},
-	String:        []string{},
-	Preamble:      []string{},
-	Article:       []string{"author", "title", "journal", "year", "volume"},
-	Book:          []string{"author/editor", "title", "publisher", "year"},
-	Booklet:       []string{"title"},
-	InBook:        []string{"author/editor", "title", "chapter/pages", "publisher", "year"},
-	InCollection:  []string{"author", "title", "booktitle", "publisher", "year"},
-	InProceedings: []string{"author", "title", "booktitle", "year"},
-	Manual:        []string{"title"},
-	MastersThesis: []string{"author", "title", "school", "year"},
-	Misc:          []string{},
-	PhdThesis:     []string{"author", "title", "school", "year"},
-	Proceedings:   []string{"title", "year"},
-	TechReport:    []string{"author", "title", "institution", "year"},
-	Unpublished:   []string{"author", "title", "note"},
+	Other:         {},
+	String:        {},
+	Preamble:      {},
+	Article:       {"author", "title", "journal/journaltitle", "year/date", "volume"},
+	Book:          {"author/editor", "title", "publisher", "year/date"},
+	Booklet:       {"title"},
+	InBook:        {"author/editor", "title", "chapter/pages", "publisher", "year/date"},
+	InCollection:  {"author", "title", "booktitle", "publisher", "year/date"},
+	InProceedings: {"author", "title", "booktitle", "year/date"},
+	Manual:        {"title"},
+	MastersThesis: {"author", "title", "school", "year/date"},
+	Misc:          {},
+	PhdThesis:     {"author", "title", "school", "year/date"},
+	Proceedings:   {"title", "year/date"},
+	TechReport:    {"author", "title", "institution", "year/date"},
+	Unpublished:   {"author", "title", "note"},
 }
 
 // optional lists the "optional" fields for each EntryKind. Optional fields are those
 // that are often used for the entry type but that are not "required".
 var optional = map[EntryKind][]string{
-	Other:         []string{},
-	String:        []string{},
-	Preamble:      []string{},
-	Article:       []string{"number", "pages", "month"},
-	Book:          []string{"volume", "number", "series", "address", "edition", "month"},
-	Booklet:       []string{"author", "howpublished", "address", "month", "year"},
-	InBook:        []string{"volume", "number", "series", "type", "address", "edition", "month"},
-	InCollection:  []string{"editor", "volume", "number", "series", "type", "chapter", "pages", "address", "edition", "month"},
-	InProceedings: []string{"editor", "volume", "number", "series", "pages", "address", "month", "organization", "publisher"},
-	Manual:        []string{"author", "organization", "address", "edition", "month", "year"},
-	MastersThesis: []string{"type", "address", "month"},
-	Misc:          []string{"author", "title", "howpublished", "month", "year"},
-	PhdThesis:     []string{"type", "address", "month"},
-	Proceedings:   []string{"editor", "volume", "number", "series", "address", "month", "publisher", "organization"},
-	TechReport:    []string{"type", "number", "address", "month"},
-	Unpublished:   []string{"month", "year"},
+	Other:         {},
+	String:        {},
+	Preamble:      {},
+	Article:       {"number", "pages", "month"},
+	Book:          {"volume", "number", "series", "address", "edition", "month"},
+	Booklet:       {"author", "howpublished", "address", "month", "year"},
+	InBook:        {"volume", "number", "series", "type", "address", "edition", "month"},
+	InCollection:  {"editor", "volume", "number", "series", "type", "chapter", "pages", "address", "edition", "month"},
+	InProceedings: {"editor", "volume", "number", "series", "pages", "address", "month", "organization", "publisher"},
+	Manual:        {"author", "organization", "address", "edition", "month", "year"},
+	MastersThesis: {"type", "address", "month"},
+	Misc:          {"author", "title", "howpublished", "month", "year"},
+	PhdThesis:     {"type", "address", "month"},
+	Proceedings:   {"editor", "volume", "number", "series", "address", "month", "publisher", "organization"},
+	TechReport:    {"type", "number", "address", "month"},
+	Unpublished:   {"month", "year"},
 }
+
+const BiblintOptionsTag = "biblint__options"
 
 // blessed lists fields that are neither required nor "optional" but that are
 // commonly used in bibtex entries. We treat "key" and "note" as blessed
 // instead of "optional", since those fields are "optional" for any entry type (except unpublished).
-var blessed = []string{"key", "note", "url", "doi", "pmc", "pmid", "crossref", "keywords", "issn", "isbn"}
+// The special `biblint_options` field is blessed and reserved for future biblint use. At present,
+// it doesn't do anything, but in the future, it may be used to hold per-entry options.`
+var blessed = []string{"key", "note", "url", "doi", "pmc", "pmid", "crossref", "keywords", "issn", "isbn", "date", BiblintOptionsTag}
 
 // predefinedSymbols lists the predefined symbols
 var predefinedSymbols = map[string]string{
@@ -244,7 +249,9 @@ func (p *Parser) expectPeek(t lexer.TokenType) bool {
 }
 
 // readTagValue reads a tag/value pair in an entry. We expect a sequence of tokens that look like
-//          IDENT = [STRING|IDENT]
+//
+//	IDENT = [STRING|IDENT]
+//
 // where the first IDENT is in the cur position. Returns true if we read a k/v
 // pair successfully, in which case it will have been added to the given Entry.
 // In well-formed entry, at end, the current token will be either a "," indicating

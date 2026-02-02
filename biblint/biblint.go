@@ -4,14 +4,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/Kingsford-Group/biblint/bib"
 	"log"
 	"os"
 	"sort"
 	"strings"
+
+	"github.com/Kingsford-Group/biblint/bib"
 )
 
-const version = "v0.4"
+const version = "v0.5"
 
 // Represents a function that handles a subcommand
 type subcommandFunc func(*subcommand) bool
@@ -100,7 +101,7 @@ func doClean(c *subcommand) bool {
 	sortby := c.flags.String("sort", "year", "sorts the entry by `field` or `none` to skip sort")
 	reverse := c.flags.Bool("reverse", true, "reverse the sort order")
 	blessed := c.flags.String("blessed", "", "Comma separated list of blessed `fields`")
-
+	minJournalOccurrences := c.flags.Int("merge-journal-names", -1, "Minimum number of occurrences for a journal name to be symbolized")
 	if !startSubcommand(c) {
 		return false
 	}
@@ -132,6 +133,14 @@ func doClean(c *subcommand) bool {
 	db.FixHyphensInPages()
 	db.FixTruncatedPageNumbers()
 	db.TitleCaseJournalNames()
+	if *minJournalOccurrences >= 0 {
+		replacements := db.SymbolizeJournalNames(*minJournalOccurrences)
+		if !quiet {
+			for _, r := range replacements {
+				log.Printf("%s: Replaced journal name %q with symbol %q.\n", r.Key, r.Old, r.Sym)
+			}
+		}
+	}
 	db.RemoveContainedEntries()
 
 	db.RemoveExactDups()
@@ -162,6 +171,7 @@ func doCheck(c *subcommand) bool {
 	db.CheckASCII()
 	db.CheckLoneHyphenInTitle()
 	db.CheckPageRanges()
+	db.CheckPagesStartAtOne()
 	db.CheckUndefinedSymbols()
 	db.CheckDuplicateKeys()
 	db.CheckRequiredFields()
@@ -202,7 +212,7 @@ func doDups(c *subcommand) bool {
 
 // printBanner prints out the version, tool name and copyright info
 func printBanner() {
-	fmt.Fprintf(os.Stderr, "biblint %s (c) 2017-2018 Carl Kingsford. See LICENSE.txt.\n", version)
+	fmt.Fprintf(os.Stderr, "biblint %s (c) 2017-2026 Carl Kingsford. See LICENSE.txt.\n", version)
 }
 
 func registerAllSubcommands() {

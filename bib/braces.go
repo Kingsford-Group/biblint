@@ -127,12 +127,12 @@ func (b *BraceNode) PrintBraceTree(indent int) {
 }
 
 // needsBrace checks to see if we need a brace. This is true if
-// - the string contains a " outside a {}
-// - the string contains a {} pair that doesn't enclose the
-//   entire string. E.g. {{hi there}} does not need a brace, but
-//   foo{moo bar}buz does, as does {moo}{fuz}. So does: }}there{{
-//   this boils down to checking whether there is a '{' someplace
-//   outside of a {}.
+//   - the string contains a " outside a {}
+//   - the string contains a {} pair that doesn't enclose the
+//     entire string. E.g. {{hi there}} does not need a brace, but
+//     foo{moo bar}buz does, as does {moo}{fuz}. So does: }}there{{
+//     this boils down to checking whether there is a '{' someplace
+//     outside of a {}.
 func needsBrace(s string) bool {
 	past := false
 	nbrace := 0
@@ -265,8 +265,8 @@ func (bn *BraceNode) FlattenToMinBraces() string {
 	}
 }
 
-// splitOnTopLevelString splits s on occurrences of sep that are not contained in a { } block. 
-// If whitespace is true, then it requires that the string be surrounded by whitespace (or the 
+// splitOnTopLevelString splits s on occurrences of sep that are not contained in a { } block.
+// If whitespace is true, then it requires that the string be surrounded by whitespace (or the
 // string boundaries).
 func splitOnTopLevelString(s, sep string, whitespace bool) []string {
 	nbraces := 0
@@ -308,12 +308,20 @@ func splitOnTopLevelString(s, sep string, whitespace bool) []string {
 	return split
 }
 
-// splitOnTopLevel splits s on whitespace separated words, but treats {}-delimitated substrings
-// as a unit.
 func splitOnTopLevel(s string) []string {
+	words, _ := splitOnTopLevelWithProtected(s)
+	return words
+}
+
+// splitOnTopLevelWithDepth splits s on whitespace separated words, but treats {}-delimitated substrings
+// as a unit. It returns a slice of the words, along with a slice of booleans indicating whether each
+// word was protected by {}.
+func splitOnTopLevelWithProtected(s string) ([]string, []bool) {
 	nbraces := 0
 	word := ""
 	words := make([]string, 0)
+	protected := make([]bool, 0)
+	inProtected := false
 	s = strings.TrimSpace(s)
 	for _, r := range s {
 		switch r {
@@ -327,17 +335,26 @@ func splitOnTopLevel(s string) []string {
 			// and there is a current word, save it
 			if len(word) > 0 {
 				words = append(words, word)
+				protected = append(protected, inProtected)
 				word = ""
+				inProtected = false
 			}
 			// if we are in {} or non-space, add to current word
 		} else {
 			word += string(r)
 		}
+
+		if nbraces > 0 {
+			inProtected = true
+		} else {
+			inProtected = false
+		}
 	}
 	if len(word) > 0 {
 		words = append(words, word)
+		protected = append(protected, inProtected)
 	}
-	return words
+	return words, protected
 }
 
 // IsStrangeCase returns true iff s has a capital letter someplace other than

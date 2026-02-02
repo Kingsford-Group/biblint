@@ -134,7 +134,12 @@ func doClean(c *subcommand) bool {
 	db.FixTruncatedPageNumbers()
 	db.TitleCaseJournalNames()
 	if *minJournalOccurrences >= 0 {
-		db.SymbolizeJournalNames(*minJournalOccurrences)
+		replacements := db.SymbolizeJournalNames(*minJournalOccurrences)
+		if !quiet {
+			for _, r := range replacements {
+				log.Printf("%s: Replaced journal name %q with symbol %q.\n", r.Key, r.Old, r.Sym)
+			}
+		}
 	}
 	db.RemoveContainedEntries()
 

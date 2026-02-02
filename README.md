@@ -114,6 +114,12 @@ Specifically, `clean` does the following:
 
 - `@comment` lines and non-entry text are removed
 
+- If you give the option `--merge-journal-names=k`, with `k >= 1` it will
+  cluster journal names, and for each cluster with more than `k`, it will
+  create a symbol for the cluster and use that for each of the journal
+  names. If there are variants within a cluster, it will use the most
+  commonly seen one (arbitrarily breaking ties).
+
 
 ## biblint check
 

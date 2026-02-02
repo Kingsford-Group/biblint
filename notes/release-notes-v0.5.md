@@ -1,5 +1,5 @@
 # Release Notes Version 0.5
-Feb 5, 2026
+Feb 2, 2026
 
 - Bumped version to 0.5 and copyright stmt to 2026.
 - Fixed some modern code warnings / lints.
@@ -11,6 +11,9 @@ Feb 5, 2026
 - Added some tests in `tests.sh` for `check` command.
 - Don't change case of sTraNge-caSe journal title words.
 - Fixed title-casing bugs in journal names with nested {} regions.
+- `check` reports warning if a field is entirely enclosed in {} braces (unless
+  it's a single-word field) (#9)
+- fixed "bug" where order of warning messages in `check` changed randomly
 - Blessed field name `biblint__options`. This field name is reserved for future 
   biblint use. At present, it doesn't do anything, but in the future, it may be
   used to hold per-entry options. The only change in this release is that if
@@ -20,4 +23,3 @@ Feb 5, 2026
   can mangle journal names. But it can also help normalize journal names.
   Use `--merge-journal-names=k` with `k` equal to the minimum number of entries 
   of similar journal names needed to symbolize a name.
-

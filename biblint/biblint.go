@@ -177,6 +177,7 @@ func doCheck(c *subcommand) bool {
 	db.CheckRequiredFields()
 	db.CheckUnmatchedDollarSigns()
 	db.CheckRedundantSymbols()
+	db.CheckWholeFieldBraces()
 
 	db.NormalizeAuthors()
 	db.CheckAuthorLast()

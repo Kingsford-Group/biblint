@@ -9,12 +9,33 @@
 TESTOUTDIR=test_out
 mkdir -p "$TESTOUTDIR"
 
-for f in tests/*_in.bib ; do
+echo "# Running biblint tests..."
+echo "# ===================="
+echo "#   biblint clean"
+echo "# ===================="
+
+for f in tests/clean_*_in.bib ; do
     bn=`basename $f _in.bib`
     exp="tests/${bn}_exp.bib"
     out="$TESTOUTDIR/${bn}_out.bib"
 
-    ./biblint clean -quiet=true $f > $out
+    ./biblint clean -quiet=true --merge-journal-names=2 $f > $out
+    if ! cmp -s $exp $out ; then
+        echo "FAILED: $bn `cmp $exp $out`"
+    else
+        echo "PASSED: $bn"
+    fi
+done
+
+echo "# ===================="
+echo "#   biblint check"
+echo "# ===================="
+for f in tests/check_*_in.bib ; do
+    bn=`basename $f _in.bib`
+    exp="tests/${bn}_exp.bib"
+    out="$TESTOUTDIR/${bn}_out.bib"
+
+    ./biblint check -quiet=true $f > $out
     if ! cmp -s $exp $out ; then
         echo "FAILED: $bn `cmp $exp $out`"
     else

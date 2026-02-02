@@ -182,7 +182,7 @@ type Entry struct {
 // a subset of e2 if they (a) have the same type, and (b) every field in e1
 // appears in e2 with the exact same value.
 func (e1 *Entry) IsSubset(e2 *Entry) bool {
-	if e1.Kind != e2.Kind || strings.ToLower(e1.EntryString) != strings.ToLower(e2.EntryString) {
+	if e1.Kind != e2.Kind || !strings.EqualFold(e1.EntryString, e2.EntryString) {
 		return false
 	}
 
@@ -429,12 +429,13 @@ func (db *Database) ReplaceAbbrMonths() {
 	monthsnum := []string{"jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"}
 	db.TransformField("month",
 		func(tag string, value *Value) *Value {
-			if value.T == StringType {
+			switch value.T {
+			case StringType:
 				if sym, ok := months[strings.ToLower(value.S)]; ok {
 					value.T = SymbolType
 					value.S = sym
 				}
-			} else if value.T == NumberType {
+			case NumberType:
 				if 1 <= value.I && value.I <= 12 {
 					value.T = SymbolType
 					value.S = monthsnum[value.I-1]
@@ -583,7 +584,7 @@ func (db *Database) FixHyphensInPages() {
 		})
 }
 
-// FixTruncatedPageNumbers performs the transformation: for page fields that match aaaa--bb, and 
+// FixTruncatedPageNumbers performs the transformation: for page fields that match aaaa--bb, and
 // where aaaa and bb are integers, replace with aaaa-aabb.
 func (db *Database) FixTruncatedPageNumbers() {
 	pages := regexp.MustCompile(`^(\d+)--(\d+)$`)
@@ -604,7 +605,9 @@ func (db *Database) FixTruncatedPageNumbers() {
 // toGoodTitle converts a word to title case, meaning the first letter is capitalized
 // unless the word is a "small" word.
 func toGoodTitle(w string) string {
-
+	if IsStrangeCase(w) {
+		return w
+	}
 	tlw := make(map[string]bool)
 	for _, w := range titleLowerWords {
 		tlw[w] = true
@@ -619,32 +622,34 @@ func toGoodTitle(w string) string {
 
 // TitleCaseJournalNames converts the journal name so that big words are capitalized
 func (db *Database) TitleCaseJournalNames() {
-	db.TransformField("journal",
-		func(tag string, v *Value) *Value {
-			if v.T == StringType {
-				// if we can parse the title
-				bt, size := ParseBraceTree(v.S)
-				if size == len(v.S) {
-					// go through each immediate leaf child of the root
-					for _, wordNode := range bt.Children {
-						if wordNode.IsLeaf() {
+	for _, fn := range []string{"journal", "journaltitle"} {
+		db.TransformField(fn,
+			func(tag string, v *Value) *Value {
+				if v.T == StringType {
+					// if we can parse the title
+					bt, size := ParseBraceTree(v.S)
+					if size == len(v.S) {
+						// go through each immediate leaf child of the root
+						for _, wordNode := range bt.Children {
+							if wordNode.IsLeaf() {
 
-							// convert each word to good title case
-							leafWords := make([]string, 0)
-							for _, w := range splitWords(wordNode.Leaf) {
-								leafWords = append(leafWords, toGoodTitle(w))
+								// convert each word to good title case
+								leafWords := make([]string, 0)
+								for _, w := range splitWords(wordNode.Leaf) {
+									leafWords = append(leafWords, toGoodTitle(w))
+								}
+
+								// update the leaf node
+								wordNode.Leaf = strings.Join(leafWords, "")
 							}
-
-							// update the leaf node
-							wordNode.Leaf = strings.Join(leafWords, "")
 						}
+						// save the string
+						v.S = bt.Flatten()
 					}
-					// save the string
-					v.S = bt.Flatten()
 				}
-			}
-			return v
-		})
+				return v
+			})
+	}
 }
 
 // RemoveExactDups find entries that are Equal and that have the same Key and deletes one of
@@ -888,6 +893,29 @@ func (db *Database) CheckPageRanges() {
 		})
 }
 
+// CheckPagesStartAtOne returns a check error if a pages
+// field starts at 1 and is a nonempty range. I.e. "1" or "1--1"
+// is not an error. But 1--N where N>1 will return a warning.
+func (db *Database) CheckPagesStartAtOne() {
+	pages := regexp.MustCompile(`^\s*(\d+)\s*--?\s*(\d+)\s*$`)
+	db.CheckField("pages",
+		func(v *Value) string {
+			if v.T == StringType && pages.MatchString(v.S) {
+				ab := pages.FindStringSubmatch(v.S)
+				if len(ab) == 3 {
+					start, err1 := strconv.Atoi(ab[1])
+					end, err2 := strconv.Atoi(ab[2])
+					if err1 == nil && err2 == nil {
+						if (start == 1) && (end > 1) {
+							return fmt.Sprintf("page range starts at 1: %d--%d", start, end)
+						}
+					}
+				}
+			}
+			return ""
+		})
+}
+
 // CheckDuplicateKeys finds entries with duplicate keys.
 func (db *Database) CheckDuplicateKeys() {
 	keys := make(map[string]bool)
@@ -1053,4 +1081,150 @@ func (db *Database) RemoveDupsByTitle() {
 
 	// remove all the deleted
 	db.removeDeleted(ndel)
+}
+
+/*=====================================================================================
+ * Journal Name Clustering
+ *====================================================================================*/
+
+func canonicalJournalName(jname string) string {
+	jname = removeNonLetters(strings.ToLower(jname))
+	jname = regexp.MustCompile(`(^|\s)journal(\s|$)`).ReplaceAllString(jname, " j ")
+	jname = regexp.MustCompile(`\s+`).ReplaceAllString(jname, " ")
+	jname = strings.TrimSpace(jname)
+	return jname
+}
+
+// journalField returns the journal name of the entry, checking both "journal" and
+// "journaltitle" fields. The second return value is true if a journal name was found.
+func journalField(e *Entry) (name string, jv *Value, ok bool) {
+	if jv, ok = e.Fields["journal"]; ok && jv.T == StringType {
+		return "journal", jv, true
+	}
+	if jv, ok = e.Fields["journaltitle"]; ok && jv.T == StringType {
+		return "journaltitle", jv, true
+	}
+	return "", nil, false
+}
+
+// JournalNameClusters returns clusters of journal names that are similar.
+func (db *Database) journalNameClusters(journalHash func(string) string) map[string][]*Entry {
+	clusters := make(map[string][]*Entry)
+	for _, e := range db.Pubs {
+		if _, jv, ok := journalField(e); ok && jv.T == StringType {
+			jname := journalHash(jv.S)
+			if _, ok := clusters[jname]; !ok {
+				clusters[jname] = make([]*Entry, 0)
+			}
+			clusters[jname] = append(clusters[jname], e)
+		}
+	}
+	return clusters
+}
+
+// isSmallWord returns true if the string s is in the list of small words.
+func isSmallWord(s string) bool {
+	for _, w := range titleLowerWords {
+		if s == w {
+			return true
+		}
+	}
+	return false
+}
+
+// symbolExists returns true if the symbol s is already defined.
+func (db *Database) symbolExists(s string) bool {
+	_, ok1 := db.Symbols[s]
+	_, ok2 := predefinedSymbols[s]
+	return ok1 || ok2
+}
+
+// goodJournalSymbolName creates a good symbol name for a journal name s.
+// It uses the first letter of each non-small word in the journal name.
+// If that symbol name is already taken, it appends a number to make it unique.
+func (db *Database) goodJournalSymbolName(s string) string {
+	fields := strings.Fields(strings.ToLower(s))
+	// if there is only one word
+	var sym string
+	if len(fields) == 1 {
+		sym = fields[0]
+	} else {
+		// build the symbol from the first letter of each non-small word
+		for _, w := range fields {
+			if len(w) > 0 && !isSmallWord(w) {
+				r, _ := utf8.DecodeRuneInString(w)
+				sym += string(r)
+			}
+		}
+	}
+
+	// if we didn't get anything, use "journal"
+	if sym == "" {
+		sym = "journal"
+	}
+
+	// add numbers until we find a unique symbol
+	ssym := sym
+	i := 1
+	for ok := db.symbolExists(ssym); ok; ok = db.symbolExists(ssym) {
+		ssym = sym + strconv.Itoa(i)
+		i++
+	}
+
+	return ssym
+}
+
+func pickBestJournalName(entries []*Entry) string {
+	nameCounts := make(map[string]int)
+	for _, e := range entries {
+		if _, jv, ok := journalField(e); ok && jv.T == StringType {
+			nameCounts[jv.S]++
+		}
+	}
+
+	bestName := ""
+	bestCount := 0
+	for name, count := range nameCounts {
+		if count > bestCount {
+			bestCount = count
+			bestName = name
+		}
+	}
+	return bestName
+}
+
+// SymbolizeJournalNames finds journal names that occur at least k times
+// and creates symbols for them, replacing the journal name with the symbol.
+// Note that if an entry uses both `journal` and `journaltitle` fields, only
+// one of them will be symbolized.
+func (db *Database) SymbolizeJournalNames(k int) {
+	clusters := db.journalNameClusters(canonicalJournalName)
+	for _, entries := range clusters {
+		if len(entries) >= k {
+			// create a symbol name
+			bestName := pickBestJournalName(entries)
+			if bestName == "" {
+				continue
+			}
+			sym := db.goodJournalSymbolName(bestName)
+
+			// define the symbol
+			db.Symbols[sym] = &Value{
+				T: StringType,
+				S: bestName,
+			}
+
+			// replace the journal field in each entry with the symbol
+			for _, e := range entries {
+				fieldName, _, ok := journalField(e)
+				if !ok {
+					continue
+				}
+				e.Fields[fieldName] = &Value{
+					T: SymbolType,
+					S: sym,
+				}
+			}
+		}
+	}
 }

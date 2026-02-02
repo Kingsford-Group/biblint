@@ -30,15 +30,15 @@ type Token struct {
 // The types of tokens that the lexer can return.
 const (
 	ILLEGAL TokenType = "ILLEGAL"
-	EOF               = "EOF"
-	IDENT             = "IDENT"
-	STRING            = "STRING"
-	AT                = "@"
-	COMMA             = ","
-	LBRACE            = "{"
-	RBRACE            = "}"
-	HASH              = "#"
-	EQUALS            = "="
+	EOF     TokenType = "EOF"
+	IDENT   TokenType = "IDENT"
+	STRING  TokenType = "STRING"
+	AT      TokenType = "@"
+	COMMA   TokenType = ","
+	LBRACE  TokenType = "{"
+	RBRACE  TokenType = "}"
+	HASH    TokenType = "#"
+	EQUALS  TokenType = "="
 )
 
 var EOFToken = &Token{Type: EOF}

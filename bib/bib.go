@@ -3,13 +3,14 @@ package bib
 
 import (
 	"fmt"
-	"github.com/Kingsford-Group/biblint/lexer"
 	"io"
 	"sort"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/Kingsford-Group/biblint/lexer"
 )
 
 //==================================================================
@@ -21,23 +22,23 @@ type EntryKind string
 
 const (
 	Deleted       EntryKind = "**DELETED**"
-	Comment                 = "comment"
-	Other                   = "other"
-	String                  = "string"
-	Preamble                = "preamble"
-	Article                 = "article"
-	Book                    = "book"
-	Booklet                 = "booklet"
-	InBook                  = "inbook"
-	InCollection            = "incollection"
-	InProceedings           = "inproceedings"
-	Manual                  = "manual"
-	MastersThesis           = "mastersthesis"
-	Misc                    = "misc"
-	PhdThesis               = "phdthesis"
-	Proceedings             = "proceedings"
-	TechReport              = "techreport"
-	Unpublished             = "unpublished"
+	Comment       EntryKind = "comment"
+	Other         EntryKind = "other"
+	String        EntryKind = "string"
+	Preamble      EntryKind = "preamble"
+	Article       EntryKind = "article"
+	Book          EntryKind = "book"
+	Booklet       EntryKind = "booklet"
+	InBook        EntryKind = "inbook"
+	InCollection  EntryKind = "incollection"
+	InProceedings EntryKind = "inproceedings"
+	Manual        EntryKind = "manual"
+	MastersThesis EntryKind = "mastersthesis"
+	Misc          EntryKind = "misc"
+	PhdThesis     EntryKind = "phdthesis"
+	Proceedings   EntryKind = "proceedings"
+	TechReport    EntryKind = "techreport"
+	Unpublished   EntryKind = "unpublished"
 )
 
 // identToKind maps a (lowercase) string into the EntryKind type.
@@ -66,18 +67,18 @@ var required = map[EntryKind][]string{
 	Other:         []string{},
 	String:        []string{},
 	Preamble:      []string{},
-	Article:       []string{"author", "title", "journal", "year", "volume"},
-	Book:          []string{"author/editor", "title", "publisher", "year"},
+	Article:       []string{"author", "title", "journal/journaltitle", "year/date", "volume"},
+	Book:          []string{"author/editor", "title", "publisher", "year/date"},
 	Booklet:       []string{"title"},
-	InBook:        []string{"author/editor", "title", "chapter/pages", "publisher", "year"},
-	InCollection:  []string{"author", "title", "booktitle", "publisher", "year"},
-	InProceedings: []string{"author", "title", "booktitle", "year"},
+	InBook:        []string{"author/editor", "title", "chapter/pages", "publisher", "year/date"},
+	InCollection:  []string{"author", "title", "booktitle", "publisher", "year/date"},
+	InProceedings: []string{"author", "title", "booktitle", "year/date"},
 	Manual:        []string{"title"},
-	MastersThesis: []string{"author", "title", "school", "year"},
+	MastersThesis: []string{"author", "title", "school", "year/date"},
 	Misc:          []string{},
-	PhdThesis:     []string{"author", "title", "school", "year"},
-	Proceedings:   []string{"title", "year"},
-	TechReport:    []string{"author", "title", "institution", "year"},
+	PhdThesis:     []string{"author", "title", "school", "year/date"},
+	Proceedings:   []string{"title", "year/date"},
+	TechReport:    []string{"author", "title", "institution", "year/date"},
 	Unpublished:   []string{"author", "title", "note"},
 }
 
@@ -105,7 +106,7 @@ var optional = map[EntryKind][]string{
 // blessed lists fields that are neither required nor "optional" but that are
 // commonly used in bibtex entries. We treat "key" and "note" as blessed
 // instead of "optional", since those fields are "optional" for any entry type (except unpublished).
-var blessed = []string{"key", "note", "url", "doi", "pmc", "pmid", "crossref", "keywords", "issn", "isbn"}
+var blessed = []string{"key", "note", "url", "doi", "pmc", "pmid", "crossref", "keywords", "issn", "isbn", "date"}
 
 // predefinedSymbols lists the predefined symbols
 var predefinedSymbols = map[string]string{
@@ -244,7 +245,9 @@ func (p *Parser) expectPeek(t lexer.TokenType) bool {
 }
 
 // readTagValue reads a tag/value pair in an entry. We expect a sequence of tokens that look like
-//          IDENT = [STRING|IDENT]
+//
+//	IDENT = [STRING|IDENT]
+//
 // where the first IDENT is in the cur position. Returns true if we read a k/v
 // pair successfully, in which case it will have been added to the given Entry.
 // In well-formed entry, at end, the current token will be either a "," indicating

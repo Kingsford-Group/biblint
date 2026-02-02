@@ -104,7 +104,7 @@ Specifically, `clean` does the following:
 
 - Missing commas after "tag=value" pairs are added
 
-- if an entry contains duplicate "tag=" entries, the *first* one is kept (as in
+- If an entry contains duplicate "tag=" entries, the *first* one is kept (as in
   BibTeX) with a warning
 
 - Lowercase, non-"small" words are capitalized in journal titles (as long as
@@ -117,7 +117,7 @@ Specifically, `clean` does the following:
 
 ## biblint check
 
-The `check` command looks for problems that can't be fixed by `clean`.
+The `check` command looks for problems that can't necessarily be fixed by `clean`.
 
 Usage:
 ```
@@ -218,7 +218,7 @@ would complicate the parser too much. For example:
 - Commas separating tag=value pairs in an entry are optional --- they will be
   added by `clean` if they are missing
 
-- BibTeX allows both {} and () to eliminate string, preamble, and entry types
+- BibTeX allows both {} and () to deliminate string, preamble, and entry types
   (but not key values, which must be either {} or ""). That is, you can say
   `@article(key,title="foo")`. We also allow both () and {} but we also allow
   {) and (}. We will convert all these to {}.

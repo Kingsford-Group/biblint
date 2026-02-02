@@ -103,10 +103,14 @@ var optional = map[EntryKind][]string{
 	Unpublished:   {"month", "year"},
 }
 
+const BiblintOptionsTag = "biblint__options"
+
 // blessed lists fields that are neither required nor "optional" but that are
 // commonly used in bibtex entries. We treat "key" and "note" as blessed
 // instead of "optional", since those fields are "optional" for any entry type (except unpublished).
-var blessed = []string{"key", "note", "url", "doi", "pmc", "pmid", "crossref", "keywords", "issn", "isbn", "date"}
+// The special `biblint_options` field is blessed and reserved for future biblint use. At present,
+// it doesn't do anything, but in the future, it may be used to hold per-entry options.`
+var blessed = []string{"key", "note", "url", "doi", "pmc", "pmid", "crossref", "keywords", "issn", "isbn", "date", BiblintOptionsTag}
 
 // predefinedSymbols lists the predefined symbols
 var predefinedSymbols = map[string]string{

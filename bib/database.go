@@ -326,7 +326,9 @@ func (db *Database) NormalizeAuthors() {
 func (db *Database) TransformEachField(trans func(string, *Value) *Value) {
 	for _, e := range db.Pubs {
 		for tag, value := range e.Fields {
-			e.Fields[tag] = trans(tag, value)
+			if tag != BiblintOptionsTag {
+				e.Fields[tag] = trans(tag, value)
+			}
 		}
 	}
 }
